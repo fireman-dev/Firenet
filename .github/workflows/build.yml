@@ -121,9 +121,14 @@ jobs:
 
     - name: Decode google-services.json
       uses: timheuer/base64-to-file@v1.2.4
+      id: google_services
       with:
-        fileName: "Firenet/app/google-services.json"
+        fileName: "google-services.json"
         encodedString: ${{ secrets.GOOGLE_SERVICES_JSON }}
+    
+    - name: Move google-services.json into app
+      run: |
+        mv ${{ steps.google_services.outputs.filePath }} ${{ github.workspace }}/Firenet/app/google-services.json
         
     - name: Build APK
       run: |
