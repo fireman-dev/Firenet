@@ -125,6 +125,10 @@ jobs:
       with:
         fileName: "Firenet/app/google-services.json"
         encodedString: ${{ secrets.GOOGLE_SERVICES_JSON }}
+    - name: DEBUG — Show project structure
+      run: |
+        echo "=== WORKSPACE TREE ==="
+        ls -R ${{ github.workspace }}
 
     - name: Build APK
       run: |
