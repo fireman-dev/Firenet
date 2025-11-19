@@ -35,7 +35,7 @@ jobs:
           --install "ndk;28.2.13676358"
         echo "NDK_HOME=$ANDROID_HOME/ndk/28.2.13676358" >> $GITHUB_ENV
         sed -i 's/compileSdk = 35/&\
-            ndkVersion = "28.2.13676358"/' ${{ github.workspace }}/Firenet/Firenet/app/build.gradle.kts
+            ndkVersion = "28.2.13676358"/' ${{ github.workspace }}/Firenet/app/build.gradle.kts
 
     - name: Restore cached libtun2socks
       id: cache-libtun2socks-restore
@@ -128,9 +128,6 @@ jobs:
     - name: Build APK
       run: |
         cd ${{ github.workspace }}
-        ls
-        cd Firenet
-        ls
         echo "sdk.dir=${ANDROID_HOME}" > local.properties
         chmod 755 gradlew
         ./gradlew assembleRelease -Pandroid.injected.signing.store.file=${{ steps.android_keystore.outputs.filePath }} -Pandroid.injected.signing.store.password=${{ secrets.APP_KEYSTORE_PASSWORD }} -Pandroid.injected.signing.key.alias=${{ secrets.APP_KEYSTORE_ALIAS }} -Pandroid.injected.signing.key.password=${{ secrets.APP_KEY_PASSWORD }}
