@@ -36,7 +36,7 @@ jobs:
         echo "NDK_HOME=$ANDROID_HOME/ndk/28.2.13676358" >> $GITHUB_ENV
         sed -i '10i\
         \
-            ndkVersion = "28.2.13676358"' ${{ github.workspace }}/V2rayNG/app/build.gradle.kts
+            ndkVersion = "28.2.13676358"' ${{ github.workspace }}/Firenet/app/build.gradle.kts
 
     - name: Restore cached libtun2socks
       id: cache-libtun2socks-restore
@@ -59,7 +59,7 @@ jobs:
 
     - name: Copy libtun2socks
       run: |
-        cp -r ${{ github.workspace }}/libs ${{ github.workspace }}/V2rayNG/app
+        cp -r ${{ github.workspace }}/libs ${{ github.workspace }}/Firenet/app
 
     - name: Fetch AndroidLibXrayLite tag
       run: |
@@ -75,7 +75,7 @@ jobs:
         repository: '2dust/AndroidLibXrayLite'
         tag: ${{ env.CURRENT_TAG }}
         fileName: 'libv2ray.aar'
-        out-file-path: V2rayNG/app/libs/
+        out-file-path: Firenet/app/libs/
 
     - name: Restore cached libhysteria2
       id: cache-libhysteria2-restore
@@ -105,7 +105,7 @@ jobs:
 
     - name: Copy libhysteria2
       run: |
-        cp -r ${{ github.workspace }}/hysteria/libs ${{ github.workspace }}/V2rayNG/app
+        cp -r ${{ github.workspace }}/hysteria/libs ${{ github.workspace }}/Firenet/app
 
     - name: Setup Java
       uses: actions/setup-java@v4.7.0
@@ -122,7 +122,7 @@ jobs:
 
     - name: Build APK
       run: |
-        cd ${{ github.workspace }}/V2rayNG
+        cd ${{ github.workspace }}/Firenet
         echo "sdk.dir=${ANDROID_HOME}" > local.properties
         chmod 755 gradlew
         ./gradlew licenseFdroidReleaseReport
@@ -133,27 +133,27 @@ jobs:
       if: ${{  success() }}
       with:
         name: arm64-v8a
-        path: ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/*/release/*arm64-v8a*.apk
+        path: ${{ github.workspace }}/Firenet/app/build/outputs/apk/*/release/*arm64-v8a*.apk
 
     - name: Upload armeabi-v7a APK
       uses: actions/upload-artifact@v4.6.2
       if: ${{  success() }}
       with:
         name: armeabi-v7a
-        path: ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/*/release/*armeabi-v7a*.apk
+        path: ${{ github.workspace }}/Firenet/app/build/outputs/apk/*/release/*armeabi-v7a*.apk
 
     - name: Upload x86 APK
       uses: actions/upload-artifact@v4.6.2
       if: ${{  success() }}
       with:
         name: x86-apk
-        path: ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/*/release/*x86*.apk
+        path: ${{ github.workspace }}/Firenet/app/build/outputs/apk/*/release/*x86*.apk
 
     - name: Upload to release
       uses: svenstaro/upload-release-action@v2
       if: github.event.inputs.release_tag != ''
       with:
-        file: ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/*/release/*.apk
+        file: ${{ github.workspace }}/Firenet/app/build/outputs/apk/*/release/*.apk
         tag: ${{ github.event.inputs.release_tag }}
         file_glob: true
         prerelease: true
