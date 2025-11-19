@@ -120,6 +120,12 @@ jobs:
         fileName: "android_keystore.jks"
         encodedString: ${{ secrets.APP_KEYSTORE_BASE64 }}
 
+    - name: Decode google-services.json
+      uses: timheuer/base64-to-file@v1.2.4
+      with:
+        fileName: "V2rayNG/app/google-services.json"
+        encodedString: ${{ secrets.GOOGLE_SERVICES_JSON }}
+
     - name: Build APK
       run: |
         cd ${{ github.workspace }}/Firenet
