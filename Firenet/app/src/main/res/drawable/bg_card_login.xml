@@ -1,0 +1,7 @@
+<!-- res/drawable/bg_card_login.xml -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@android:color/white"/>
+    <corners android:radius="24dp"/>
+    <padding android:left="16dp" android:top="16dp" android:right="16dp" android:bottom="16dp"/>
+    <size android:width="0dp" android:height="0dp"/>
+</shape>

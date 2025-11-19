@@ -1,0 +1,9 @@
+# sensitive files
+app/google-services.json
+app/libs/
+keystore/
+
+# build and cache folders
+.gradle/
+.kotlin/
+app/build/

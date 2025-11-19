@@ -1,0 +1,15 @@
+<!-- res/drawable/bg_btn_orange.xml -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#ff7a10"/>
+            <corners android:radius="20dp"/>
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#FF8C2B"/>
+            <corners android:radius="20dp"/>
+        </shape>
+    </item>
+</selector>

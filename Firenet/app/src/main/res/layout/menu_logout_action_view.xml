@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ImageButton xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/btn_logout"
+    android:layout_width="48dp"
+    android:layout_height="48dp"
+    android:padding="8dp"
+    android:scaleType="fitCenter"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    android:contentDescription="@string/logout"
+    android:src="@drawable/ic_logout" />
