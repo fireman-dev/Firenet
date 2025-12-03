@@ -137,22 +137,28 @@ jobs:
         echo "sdk.dir=${ANDROID_HOME}" > local.properties
         chmod 755 gradlew
         ./gradlew assembleRelease -Pandroid.injected.signing.store.file=${{ steps.android_keystore.outputs.filePath }} -Pandroid.injected.signing.store.password=${{ secrets.APP_KEYSTORE_PASSWORD }} -Pandroid.injected.signing.key.alias=${{ secrets.APP_KEYSTORE_ALIAS }} -Pandroid.injected.signing.key.password=${{ secrets.APP_KEY_PASSWORD }}
+    # پیدا کردن تمام APKها و ZIP کردن جداگانه
+    - name: Zip each APK separately
+      run: |
+        mkdir zipped_apks
+        find Firenet/app/build/outputs/apk -type f -name "*.apk" | while read apk; do
+          name=$(basename "$apk" .apk)
+          zip -j "zipped_apks/${name}.zip" "$apk"
+        done
 
-    # ✅ این استپ همهٔ APKها (همه ABIها + همه flavorها) را به عنوان artifact داخل Actions آپلود می‌کند
-    - name: Upload all APK artifacts
+    # آپلود هر ZIP به صورت artifact مستقل (دیگر یک فایل بزرگ نمی‌شود)
+    - name: Upload ZIP artifacts individually
       uses: actions/upload-artifact@v4.6.2
-      if: ${{ success() }}
       with:
-        name: apk-builds
-        path: ${{ github.workspace }}/Firenet/app/build/outputs/apk/**/release/*.apk
+        name: apk-zips
+        path: zipped_apks/*.zip
 
-    # ✅ این استپ همهٔ همون فایل‌ها رو به GitHub Release اضافه می‌کند
-    - name: Upload to release
+    # آپلود ZIPها به بخش Releases
+    - name: Upload ZIPs to release
       uses: svenstaro/upload-release-action@v2
       if: github.event.inputs.release_tag != ''
       with:
-        file: ${{ github.workspace }}/Firenet/app/build/outputs/apk/**/release/*.apk
+        file: zipped_apks/*.zip
         tag: ${{ github.event.inputs.release_tag }}
         file_glob: true
         prerelease: true
-        
