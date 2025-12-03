@@ -32,26 +32,48 @@ android {
         versionName = "2.0.1"
         multiDexEnabled = true
 
-        val abiFilterList = (properties["ABI_FILTERS"] as? String)?.split(';')
-        splits {
-            abi {
-                isEnable = true
-                reset()
-                if (abiFilterList != null && abiFilterList.isNotEmpty()) {
-                    include(*abiFilterList.toTypedArray())
-                } else {
-                    include(
-                        "arm64-v8a",
-                        "armeabi-v7a",
-                        "x86_64",
-                        "x86"
-                    )
-                }
-                isUniversalApk = abiFilterList.isNullOrEmpty()
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    /**
+     * پشتیبانی از ABI_FILTERS:
+     * اگر هنگام بیلد این رو پاس بدی:
+     *
+     *  -PABI_FILTERS=arm64-v8a;armeabi-v7a
+     *      → فقط ARM (موبایل)
+     *
+     *  -PABI_FILTERS=x86;x86_64
+     *      → فقط x86 / x86_64 (امولاتور / دستگاه‌های خاص)
+     *
+     * اگر ABI_FILTERS ست نشه:
+     *      → هر چهار ABI + یک universal ساخته می‌شه مثل قبل.
+     */
+    val abiFilterList = (project.findProperty("ABI_FILTERS") as? String)
+        ?.split(';')
+        ?.filter { it.isNotBlank() }
+
+    splits {
+        abi {
+            isEnable = true
+            reset()
+
+            if (!abiFilterList.isNullOrEmpty()) {
+                // اگر ABI_FILTERS مشخص شده بود، فقط همان‌ها
+                include(*abiFilterList.toTypedArray())
+                // وقتی خودت ABI مشخص می‌کنی، universal نمی‌سازیم
+                isUniversalApk = false
+            } else {
+                // حالت پیش‌فرض: همه ABIها
+                include(
+                    "arm64-v8a",
+                    "armeabi-v7a",
+                    "x86_64",
+                    "x86"
+                )
+                // وقتی ABI_FILTERS خالی است، universal ساخته می‌شود (رفتار قبلی)
+                isUniversalApk = true
             }
         }
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     // این بخش برای تعریف تنظیمات امضای دیجیتال اضافه شده است
@@ -112,7 +134,11 @@ android {
         if (isFdroid) {
             val versionCodes =
                 mapOf(
-                    "armeabi-v7a" to 2, "arm64-v8a" to 1, "x86" to 4, "x86_64" to 3, "universal" to 0
+                    "armeabi-v7a" to 2,
+                    "arm64-v8a" to 1,
+                    "x86" to 4,
+                    "x86_64" to 3,
+                    "universal" to 0
                 )
 
             variant.outputs
@@ -120,6 +146,7 @@ android {
                 .forEach { output ->
                     val abi = output.getFilter("ABI") ?: "universal"
                     output.outputFileName = "Firenet_${variant.versionName}-fdroid_${abi}.apk"
+
                     if (versionCodes.containsKey(abi)) {
                         output.versionCodeOverride =
                             (100 * variant.versionCode + versionCodes[abi]!!).plus(5000000)
@@ -129,7 +156,13 @@ android {
                 }
         } else {
             val versionCodes =
-                mapOf("armeabi-v7a" to 4, "arm64-v8a" to 4, "x86" to 4, "x86_64" to 4, "universal" to 4)
+                mapOf(
+                    "armeabi-v7a" to 4,
+                    "arm64-v8a" to 4,
+                    "x86" to 4,
+                    "x86_64" to 4,
+                    "universal" to 4
+                )
 
             variant.outputs
                 .map { it as com.android.build.gradle.internal.api.ApkVariantOutputImpl }
@@ -140,6 +173,7 @@ android {
                         "universal"
 
                     output.outputFileName = "Firenet_${variant.versionName}_${abi}.apk"
+
                     if (versionCodes.containsKey(abi)) {
                         output.versionCodeOverride =
                             (1000000 * versionCodes[abi]!!).plus(variant.versionCode)
@@ -160,7 +194,6 @@ android {
             useLegacyPackaging = true
         }
     }
-
 }
 
 dependencies {
