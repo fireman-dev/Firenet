@@ -57,7 +57,6 @@ import android.widget.ImageButton
 import android.widget.Toast
 
 import android.content.IntentFilter
-// import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import android.content.BroadcastReceiver
 import android.content.Context
 
@@ -77,16 +76,15 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     private val repo by lazy { AuthRepository(this) }
     private var currentLinks: List<String> = emptyList()
 
-    
     private val adapter by lazy { MainRecyclerAdapter(this) }
     private val requestVpnPermission = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         if (it.resultCode == RESULT_OK) {
             startV2Ray()
         }
     }
-    private val requestSubSettingActivity = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        initGroupTab()
-    }
+
+    // Removed requestSubSettingActivity as SubSettingActivity is deleted
+    
     private val tabGroupListener = object : TabLayout.OnTabSelectedListener {
         override fun onTabSelected(tab: TabLayout.Tab?) {
             val selectId = tab?.tag.toString()
@@ -104,7 +102,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     private var mItemTouchHelper: ItemTouchHelper? = null
     val mainViewModel: MainViewModel by viewModels()
 
-    // register activity result for requesting permission
     private val requestPermissionLauncher =
         registerForActivityResult(
             ActivityResultContracts.RequestPermission()
@@ -127,12 +124,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         POST_NOTIFICATIONS
     }
 
-    private val scanQRCodeForConfig = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        if (it.resultCode == RESULT_OK) {
-            importBatchConfig(it.data?.getStringExtra("SCAN_RESULT"))
-        }
-    }
-    
+    // Removed scanQRCodeForConfig as ScannerActivity is deleted
 
     private val forceLogoutReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -155,14 +147,12 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         testState.elevation = 100f
         testState.translationZ = 100f
 
-        // دکمه باز کردن NavigationView
         binding.btnMenu.setOnClickListener {
             if (!binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
                 binding.drawerLayout.openDrawer(GravityCompat.START)
             }
         }
 
-        // دکمه خروج (Logout)
         binding.btnLogout.setOnClickListener {
             val token = TokenStore.token(this) ?: return@setOnClickListener
             repo.logout(token) { r ->
@@ -214,24 +204,22 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             if (mainViewModel.isRunning.value == true) {
                 setTestState(getString(R.string.connection_test_testing))
                 mainViewModel.testCurrentServerRealPing()
-            } else {
-//                tv_test_state.text = getString(R.string.connection_test_fail)
             }
         }
 
         binding.recyclerView.setHasFixedSize(true)
-                if (MmkvManager.decodeSettingsBool(AppConfig.PREF_DOUBLE_COLUMN_DISPLAY, false)) {
-                    binding.recyclerView.layoutManager = GridLayoutManager(this, 2)
-                } else {
-                    binding.recyclerView.layoutManager = GridLayoutManager(this, 1)
-                }
-                addCustomDividerToRecyclerView(binding.recyclerView, this, R.drawable.custom_divider)
-                binding.recyclerView.adapter = adapter
+        if (MmkvManager.decodeSettingsBool(AppConfig.PREF_DOUBLE_COLUMN_DISPLAY, false)) {
+            binding.recyclerView.layoutManager = GridLayoutManager(this, 2)
+        } else {
+            binding.recyclerView.layoutManager = GridLayoutManager(this, 1)
+        }
+        addCustomDividerToRecyclerView(binding.recyclerView, this, R.drawable.custom_divider)
+        binding.recyclerView.adapter = adapter
 
-                mItemTouchHelper = ItemTouchHelper(SimpleItemTouchHelperCallback(adapter))
-                mItemTouchHelper?.attachToRecyclerView(binding.recyclerView)
+        mItemTouchHelper = ItemTouchHelper(SimpleItemTouchHelperCallback(adapter))
+        mItemTouchHelper?.attachToRecyclerView(binding.recyclerView)
 
-                binding.recyclerView.clipToPadding = false
+        binding.recyclerView.clipToPadding = false
 
         binding.fab.viewTreeObserver.addOnGlobalLayoutListener(object : android.view.ViewTreeObserver.OnGlobalLayoutListener {
             override fun onGlobalLayout() {
@@ -320,13 +308,9 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             val result = MigrateManager.migrateServerConfig2Profile()
             launch(Dispatchers.Main) {
                 if (result) {
-                    //toast(getString(R.string.migration_success))
                     mainViewModel.reloadServerList()
-                } else {
-                    //toast(getString(R.string.migration_fail))
                 }
             }
-
         }
     }
 
@@ -383,7 +367,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
 
-        // اکشن‌ویو Logout را بگیر و کلیک را وصل کن
         val logoutHost = menu.findItem(R.id.action_logout_host)
         val logoutBtn = logoutHost.actionView?.findViewById<ImageButton>(R.id.btn_logout)
         logoutBtn?.setOnClickListener {
@@ -406,15 +389,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         binding.tvTestState.text = content
     }
 
-//    val mConnection = object : ServiceConnection {
-//        override fun onServiceDisconnected(name: ComponentName?) {
-//        }
-//
-//        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-//            sendMsg(AppConfig.MSG_REGISTER_CLIENT, "")
-//        }
-//    }
-
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_BUTTON_B) {
             moveTaskToBack(false)
@@ -423,12 +397,11 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         return super.onKeyDown(keyCode, event)
     }
 
-
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        // Handle navigation view item clicks here.
         when (item.itemId) {
             R.id.per_app_proxy_settings -> startActivity(Intent(this, PerAppProxyActivity::class.java))
-            R.id.routing_setting -> requestSubSettingActivity.launch(Intent(this, RoutingSettingActivity::class.java))
+            // Changed to simple startActivity as requestSubSettingActivity is removed
+            R.id.routing_setting -> startActivity(Intent(this, RoutingSettingActivity::class.java))
             R.id.user_asset_setting -> startActivity(Intent(this, UserAssetActivity::class.java))
             R.id.settings -> startActivity(
                 Intent(this, SettingsActivity::class.java)
@@ -447,7 +420,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             .filter { it.isNotBlank() }
             .distinct()
             .joinToString("\n")
-        importBatchConfig(payload) // از همان متد فعلی استفاده می‌کنیم
+        importBatchConfig(payload)
     }
     
     private fun importBatchConfig(server: String?) {
@@ -481,14 +454,13 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
     private fun loadStatus(token: String) {
 
-        repo.reportAppUpdateIfNeeded(token) { /* نیازی به هندل UI نیست */ }
+        repo.reportAppUpdateIfNeeded(token) { /* silent */ }
 
         repo.status(token) { r ->
             runOnUiThread {
                 if (isFinishing || isDestroyed) return@runOnUiThread
 
                 if (r.isSuccess) {
-                    // ✅ پاسخ معتبر از سرور
                     val s: StatusResponse = r.getOrNull()!!
                     fillUiWithStatus(s)
                     currentLinks = s.links ?: emptyList()
@@ -496,15 +468,12 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                     importFromApiLinks(currentLinks)
                     maybeShowUpdateDialog(token, s)
                 } else {
-                    // ✅ مدیریت مسیر خطا
                     val errMsg = r.exceptionOrNull()?.message ?: ""
                     if (errMsg.contains("HTTP_401", true) || errMsg.contains("invalid or expired", true)) {
-                        // فقط درصورت دریافت 401 از سرور، نشست منقضی است
                         Toast.makeText(this, "نشست منقضی شده؛ دوباره وارد شوید", Toast.LENGTH_SHORT).show()
                         TokenStore.clear(this)
                         goLoginClearTask()
                     } else {
-                        // ✅ خطای شبکه یا پاسخ ندادن سرور → استفاده از کش
                         val cached = MmkvManager.loadLastStatus()
                         if (cached != null) {
                             Toast.makeText(this, "خطا در اتصال به سرور. استفاده از آخرین بروزرسانی اطلاعات", Toast.LENGTH_LONG).show()
@@ -528,7 +497,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             val ret = mainViewModel.removeAllServer()
             launch(Dispatchers.Main) {
                 mainViewModel.reloadServerList()
-                // toast(getString(R.string.title_del_config_count, ret))
                 binding.pbWaiting.hide()
             }
         }
@@ -568,10 +536,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             Log.w("AUTH", "Logout skipped: token is null/blank")
         }
 
-        // طبق مستند شما: بعد از فراخوانی، JWT لوکال هم پاک شود
         TokenStore.clear(applicationContext)
 
-        // ⬇️ ادامه‌ی منطق فعلی‌ات
         val i = Intent(this, LoginActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
@@ -584,8 +550,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         val ignorable = s.is_ignoreable == true
         if (!need) return
 
-        // با نمایش دیالوگ، شمارش را به سرور اعلام کن
-        repo.updatePromptSeen(token) { /* نیازی به هندل UI نیست */ }
+        repo.updatePromptSeen(token) { /* silent */ }
 
         if (ignorable) {
             showOptionalUpdateDialog()

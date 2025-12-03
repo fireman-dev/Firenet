@@ -41,15 +41,7 @@ class RoutingSettingActivity : BaseActivity() {
         resources.getStringArray(R.array.preset_rulesets)
     }
 
-    private val requestCameraPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        if (isGranted) {
-            scanQRcodeForRulesets.launch(Intent(this, ScannerActivity::class.java))
-        } else {
-            toast(R.string.toast_permission_denied)
-        }
-    }
+    // Removed QR Code scanner logic
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -85,7 +77,6 @@ class RoutingSettingActivity : BaseActivity() {
         R.id.add_rule -> startActivity(Intent(this, RoutingEditActivity::class.java)).let { true }
         R.id.import_predefined_rulesets -> importPredefined().let { true }
         R.id.import_rulesets_from_clipboard -> importFromClipboard().let { true }
-        R.id.import_rulesets_from_qrcode -> requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA).let { true }
         R.id.export_rulesets_to_clipboard -> export2Clipboard().let { true }
         else -> super.onOptionsItemSelected(item)
     }
@@ -167,33 +158,7 @@ class RoutingSettingActivity : BaseActivity() {
         }
     }
 
-    private val scanQRcodeForRulesets = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        if (it.resultCode == RESULT_OK) {
-            importRulesetsFromQRcode(it.data?.getStringExtra("SCAN_RESULT"))
-        }
-    }
-
-    private fun importRulesetsFromQRcode(qrcode: String?): Boolean {
-        AlertDialog.Builder(this).setMessage(R.string.routing_settings_import_rulesets_tip)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                lifecycleScope.launch(Dispatchers.IO) {
-                    val result = SettingsManager.resetRoutingRulesets(qrcode)
-                    withContext(Dispatchers.Main) {
-                        if (result) {
-                            refreshData()
-                            toastSuccess(R.string.toast_success)
-                        } else {
-                            toastError(R.string.toast_failure)
-                        }
-                    }
-                }
-            }
-            .setNegativeButton(android.R.string.cancel) { _, _ ->
-                //do nothing
-            }
-            .show()
-        return true
-    }
+    // Removed importRulesetsFromQRcode
 
     @SuppressLint("NotifyDataSetChanged")
     fun refreshData() {

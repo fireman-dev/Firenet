@@ -118,9 +118,10 @@ class MainRecyclerAdapter(val activity: MainActivity) : RecyclerView.Adapter<Mai
                     shareServer(guid, profile, position, shareOptions, if (isCustom) 2 else 0)
                 }
 
-                holder.itemMainBinding.layoutEdit.setOnClickListener {
+                // Removed edit listener
+                /* holder.itemMainBinding.layoutEdit.setOnClickListener {
                     editServer(guid, profile)
-                }
+                } */
                 holder.itemMainBinding.layoutRemove.setOnClickListener {
                     removeServer(guid, position)
                 }
@@ -130,15 +131,6 @@ class MainRecyclerAdapter(val activity: MainActivity) : RecyclerView.Adapter<Mai
                 setSelectServer(guid)
             }
         }
-//        if (holder is FooterViewHolder) {
-//            if (true) {
-//                holder.itemFooterBinding.layoutEdit.visibility = View.INVISIBLE
-//            } else {
-//                holder.itemFooterBinding.layoutEdit.setOnClickListener {
-//                    Utils.openUri(mActivity, "${Utils.decode(AppConfig.PromotionUrl)}?t=${System.currentTimeMillis()}")
-//                }
-//            }
-//        }
     }
 
     /**
@@ -189,7 +181,9 @@ class MainRecyclerAdapter(val activity: MainActivity) : RecyclerView.Adapter<Mai
                     0 -> showQRCode(guid)
                     1 -> share2Clipboard(guid)
                     2 -> shareFullContent(guid)
-                    3 -> editServer(guid, profile)
+                    3 -> {
+                        // Edit functionality removed
+                    }
                     4 -> removeServer(guid, position)
                     else -> mActivity.toast("else")
                 }
@@ -238,22 +232,7 @@ class MainRecyclerAdapter(val activity: MainActivity) : RecyclerView.Adapter<Mai
         }
     }
 
-    /**
-     * Edits server configuration
-     * Opens appropriate editing interface based on configuration type
-     * @param guid The server unique identifier
-     * @param profile The server configuration
-     */
-    private fun editServer(guid: String, profile: ProfileItem) {
-        val intent = Intent().putExtra("guid", guid)
-            .putExtra("isRunning", isRunning)
-            .putExtra("createConfigType", profile.configType.value)
-        if (profile.configType == EConfigType.CUSTOM) {
-            mActivity.startActivity(intent.setClass(mActivity, ServerCustomConfigActivity::class.java))
-        } else {
-            mActivity.startActivity(intent.setClass(mActivity, ServerActivity::class.java))
-        }
-    }
+    // editServer function removed
 
     /**
      * Removes server configuration

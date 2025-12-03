@@ -71,15 +71,7 @@ class UserAssetActivity : BaseActivity() {
         }
     }
 
-    private val requestCameraPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        if (isGranted) {
-            scanQRCodeForAssetURL.launch(Intent(this, ScannerActivity::class.java))
-        } else {
-            toast(R.string.toast_permission_denied)
-        }
-    }
+    // Removed requestCameraPermissionLauncher
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -111,7 +103,7 @@ class UserAssetActivity : BaseActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
         R.id.add_file -> showFileChooser().let { true }
         R.id.add_url -> startActivity(Intent(this, UserAssetUrlActivity::class.java)).let { true }
-        R.id.add_qrcode -> importAssetFromQRcode().let { true }
+        // R.id.add_qrcode -> ... // REMOVED
         R.id.download_file -> downloadGeoFiles().let { true }
         else -> super.onOptionsItemSelected(item)
     }
@@ -189,34 +181,7 @@ class UserAssetActivity : BaseActivity() {
         null
     }
 
-    private fun importAssetFromQRcode(): Boolean {
-        requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-        return true
-    }
-
-    private val scanQRCodeForAssetURL = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        if (it.resultCode == RESULT_OK) {
-            importAsset(it.data?.getStringExtra("SCAN_RESULT"))
-        }
-    }
-
-    private fun importAsset(url: String?): Boolean {
-        try {
-            if (!Utils.isValidUrl(url)) {
-                toast(R.string.toast_invalid_url)
-                return false
-            }
-            // Send URL to UserAssetUrlActivity for Processing
-            startActivity(
-                Intent(this, UserAssetUrlActivity::class.java)
-                    .putExtra(UserAssetUrlActivity.ASSET_URL_QRCODE, url)
-            )
-        } catch (e: Exception) {
-            Log.e(AppConfig.TAG, "Failed to import asset from URL", e)
-            return false
-        }
-        return true
-    }
+    // Removed importAssetFromQRcode, scanQRCodeForAssetURL, importAsset
 
     private fun downloadGeoFiles() {
         binding.pbWaiting.show()
@@ -324,7 +289,6 @@ class UserAssetActivity : BaseActivity() {
             var assets = MmkvManager.decodeAssetUrls()
             assets = addBuiltInGeoItems(assets)
             val item = assets.getOrNull(position) ?: return
-//            file with name == item.second.remarks
             val file = extDir.listFiles()?.find { it.name == item.second.remarks }
 
             holder.itemUserAssetBinding.assetName.text = item.second.remarks
