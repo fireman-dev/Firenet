@@ -195,60 +195,132 @@ android {
         }
     }
 
-    // ============================================================
-    //  Combined APKs (ARM + ARMv7)  و  (x86 + x86_64)
-    // ============================================================
+    // ===============================================================
+    //  PLAYSTORE + FDROID   COMBINED APKs
+    // ===============================================================
+
+    fun findReleaseDir(base: File): File? =
+        base.listFiles()?.firstOrNull { it.isDirectory && it.resolve("release").exists() }
+            ?.resolve("release")
 
     tasks.register("assembleArmCombined") {
         group = "build"
-        description = "Create combined ARM APK from existing outputs"
+        description = "Create ARM Combined APK for Playstore and F-Droid"
 
         doLast {
-            println(">>> Creating ARM Combined APK...")
+            println(">>> Creating ARM Combined APKs...")
 
-            val outDir = layout.buildDirectory.dir("outputs/combined").get().asFile
+            val outDir = layout.buildDirectory
+                .dir("outputs/combined")
+                .get()
+                .asFile
             outDir.mkdirs()
 
             val version = android.defaultConfig.versionName
 
-            val basePath = layout.buildDirectory.dir("outputs/apk/playstore").get().asFile
+            // ===============================
+            // PLAYSTORE
+            // ===============================
+            val playstoreBase = layout.buildDirectory
+                .dir("outputs/apk/playstore")
+                .get()
+                .asFile
 
-            val arm64 = File(basePath, "release/Firenet_${version}_arm64-v8a.apk")
-            val arm32 = File(basePath, "release/Firenet_${version}_armeabi-v7a.apk")
+            val playstoreRelease = findReleaseDir(playstoreBase)
 
-            val output = File(outDir, "Firenet_${version}_armCombined.apk")
+            if (playstoreRelease != null) {
+                val arm64 = File(playstoreRelease, "Firenet_${version}_arm64-v8a.apk")
+                val arm32 = File(playstoreRelease, "Firenet_${version}_armeabi-v7a.apk")
+                val outPlay = File(outDir, "Firenet_${version}_armCombined.apk")
 
-            when {
-                arm64.exists() -> arm64.copyTo(output, overwrite = true)
-                arm32.exists() -> arm32.copyTo(output, overwrite = true)
-                else -> println(">>> ERROR: No ARM APK found")
+                when {
+                    arm64.exists() -> arm64.copyTo(outPlay, overwrite = true)
+                    arm32.exists() -> arm32.copyTo(outPlay, overwrite = true)
+                    else -> println(">>> ERROR: No Playstore ARM APK found")
+                }
+            }
+
+            // ===============================
+            // FDROID
+            // ===============================
+            val fdroidBase = layout.buildDirectory
+                .dir("outputs/apk/fdroid")
+                .get()
+                .asFile
+
+            val fdroidRelease = findReleaseDir(fdroidBase)
+
+            if (fdroidRelease != null) {
+                val arm64 = File(fdroidRelease, "Firenet_${version}-fdroid_arm64-v8a.apk")
+                val arm32 = File(fdroidRelease, "Firenet_${version}-fdroid_armeabi-v7a.apk")
+                val outFdroid = File(outDir, "Firenet_${version}-fdroid_armCombined.apk")
+
+                when {
+                    arm64.exists() -> arm64.copyTo(outFdroid, overwrite = true)
+                    arm32.exists() -> arm32.copyTo(outFdroid, overwrite = true)
+                    else -> println(">>> ERROR: No FDroid ARM APK found")
+                }
             }
         }
     }
 
     tasks.register("assembleX86Combined") {
         group = "build"
-        description = "Create combined X86 APK from existing outputs"
+        description = "Create X86 Combined APK for Playstore and F-Droid"
 
         doLast {
-            println(">>> Creating X86 Combined APK...")
+            println(">>> Creating X86 Combined APKs...")
 
-            val outDir = layout.buildDirectory.dir("outputs/combined").get().asFile
+            val outDir = layout.buildDirectory
+                .dir("outputs/combined")
+                .get()
+                .asFile
             outDir.mkdirs()
 
             val version = android.defaultConfig.versionName
 
-            val basePath = layout.buildDirectory.dir("outputs/apk/playstore").get().asFile
+            // ===============================
+            // PLAYSTORE
+            // ===============================
+            val playstoreBase = layout.buildDirectory
+                .dir("outputs/apk/playstore")
+                .get()
+                .asFile
 
-            val x86_64 = File(basePath, "release/Firenet_${version}_x86_64.apk")
-            val x86 = File(basePath, "release/Firenet_${version}_x86.apk")
+            val playstoreRelease = findReleaseDir(playstoreBase)
 
-            val output = File(outDir, "Firenet_${version}_x86Combined.apk")
+            if (playstoreRelease != null) {
+                val x86_64 = File(playstoreRelease, "Firenet_${version}_x86_64.apk")
+                val x86 = File(playstoreRelease, "Firenet_${version}_x86.apk")
+                val outPlay = File(outDir, "Firenet_${version}_x86Combined.apk")
 
-            when {
-                x86_64.exists() -> x86_64.copyTo(output, overwrite = true)
-                x86.exists() -> x86.copyTo(output, overwrite = true)
-                else -> println(">>> ERROR: No X86 APK found")
+                when {
+                    x86_64.exists() -> x86_64.copyTo(outPlay, overwrite = true)
+                    x86.exists() -> x86.copyTo(outPlay, overwrite = true)
+                    else -> println(">>> ERROR: No Playstore X86 APK found")
+                }
+            }
+
+            // ===============================
+            // FDROID
+            // ===============================
+            val fdroidBase = layout.buildDirectory
+                .dir("outputs/apk/fdroid")
+                .get()
+                .asFile
+
+            val fdroidRelease = findReleaseDir(fdroidBase)
+
+            if (fdroidRelease != null) {
+                val x86_64 = File(fdroidRelease, "Firenet_${version}-fdroid_x86_64.apk")
+                val x86 = File(fdroidRelease, "Firenet_${version}-fdroid_x86.apk")
+                val outFdroid = File(outDir, "Firenet_${version}-fdroid_x86Combined.apk")
+
+                when {
+                    x86_64.exists() -> x86_64.copyTo(outFdroid, overwrite = true)
+                    x86.exists() -> x86.copyTo(outFdroid, overwrite = true)
+                    else -> println(">>> ERROR: No FDroid X86 APK found")
+                }
             }
         }
     }
