@@ -137,23 +137,33 @@ jobs:
         echo "sdk.dir=${ANDROID_HOME}" > local.properties
         chmod 755 gradlew
         ./gradlew assembleRelease -Pandroid.injected.signing.store.file=${{ steps.android_keystore.outputs.filePath }} -Pandroid.injected.signing.store.password=${{ secrets.APP_KEYSTORE_PASSWORD }} -Pandroid.injected.signing.key.alias=${{ secrets.APP_KEYSTORE_ALIAS }} -Pandroid.injected.signing.key.password=${{ secrets.APP_KEY_PASSWORD }}
-    
-    # ZIP کردن هر APK جداگانه
-    - name: Zip each APK separately
-      run: |
-        mkdir zipped_apks
-        find Firenet/app/build/outputs/apk -type f -name "*.apk" | while read apk; do
-          name=$(basename "$apk" .apk)
-          zip -j "zipped_apks/${name}.zip" "$apk"
-        done
+       
+    - name: Upload arm64-v8a APK
+      uses: actions/upload-artifact@v4.6.2
+      if: ${{  success() }}
+      with:
+        name: arm64-v8a
+        path: ${{ github.workspace }}/Firenet/app/build/outputs/apk/*/release/*arm64-v8a*.apk
 
-    # آپلود ZIP ها به صورت artifact کاملاً مستقل
-    - name: Upload ZIPs individually as artifacts
-      run: |
-        for f in zipped_apks/*.zip; do
-          n=$(basename "$f" .zip)
-          echo "Uploading $n.zip"
-          gh artifact upload "$n" "$f" --no-zip
-        done
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload armeabi-v7a APK
+      uses: actions/upload-artifact@v4.6.2
+      if: ${{  success() }}
+      with:
+        name: armeabi-v7a
+        path: ${{ github.workspace }}/Firenet/app/build/outputs/apk/*/release/*armeabi-v7a*.apk
+
+    - name: Upload x86 APK
+      uses: actions/upload-artifact@v4.6.2
+      if: ${{  success() }}
+      with:
+        name: x86-apk
+        path: ${{ github.workspace }}/Firenet/app/build/outputs/apk/*/release/*x86*.apk
+
+    - name: Upload to release
+      uses: svenstaro/upload-release-action@v2
+      if: github.event.inputs.release_tag != ''
+      with:
+        file: ${{ github.workspace }}/Firenet/app/build/outputs/apk/*/release/*.apk
+        tag: ${{ github.event.inputs.release_tag }}
+        file_glob: true
+        prerelease: true
