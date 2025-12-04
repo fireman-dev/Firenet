@@ -9,20 +9,62 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.v2ray.ang.R
 import com.v2ray.ang.ui.MainActivity
-
+import com.v2ray.ang.ui.LoginActivity
 import com.v2ray.ang.data.auth.TokenStore
 import com.v2ray.ang.net.ApiClient
+import com.v2ray.ang.util.MessageUtil
+import com.v2ray.ang.AppConfig
+import com.tencent.mmkv.MMKV
 
 class PushMessagingService : FirebaseMessagingService() {
 
     override fun onMessageReceived(message: RemoteMessage) {
-        // اگر پیام از نوع Notification باشد و اپ در فورگراند است، خودمان نوتیف می‌سازیم
+        // 1. بررسی پیام‌های دیتا (دستورات سیستمی مثل Force Logout)
+        if (message.data.isNotEmpty()) {
+            val action = message.data["action"]
+            if (action == "FORCE_LOGOUT") {
+                performForceLogout()
+                return // چون دستور سیستمی بود، دیگر ادامه نده
+            }
+        }
+
+        // 2. اگر پیام از نوع Notification باشد و اپ در فورگراند است (رفتار قبلی)
         val notif = message.notification ?: return
         showLocalNotification(
             title = notif.title ?: getString(R.string.app_name),
             body = notif.body ?: "",
-            data = message.data
+            intentTarget = MainActivity::class.java // نوتیف معمولی میره به Main
         )
+    }
+
+    private fun performForceLogout() {
+        try {
+            Log.d("FCM", "Received FORCE_LOGOUT command. Clearing data...")
+
+            // الف) پاک‌سازی کامل داده‌ها
+            val mmkv = MMKV.defaultMMKV()
+            mmkv.clearAll()
+            TokenStore.clear(applicationContext)
+
+            // ب) قطع اتصال VPN اگر روشن است
+            MessageUtil.sendMsg2Service(applicationContext, AppConfig.MSG_STOP_V2RAY, "")
+
+            // ج) نمایش نوتیفیکیشن برای اطلاع کاربر
+            showLocalNotification(
+                title = getString(R.string.app_name),
+                body = "نشست شما توسط مدیر بسته شد. لطفاً مجدداً وارد شوید.",
+                intentTarget = LoginActivity::class.java // کلیک روی این نوتیف میره به لاگین
+            )
+
+            // د) هدایت آنی به صفحه لاگین (اگر کاربر داخل برنامه باشد)
+            val intent = Intent(applicationContext, LoginActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            }
+            startActivity(intent)
+
+        } catch (e: Exception) {
+            Log.e("FCM", "Error executing force logout", e)
+        }
     }
 
     override fun onNewToken(token: String) {
@@ -41,17 +83,21 @@ class PushMessagingService : FirebaseMessagingService() {
         }
     }
 
-    private fun showLocalNotification(title: String, body: String, data: Map<String, String>) {
+    // تابع کمکی نمایش نوتیفیکیشن (با قابلیت تعیین مقصد کلیک)
+    private fun showLocalNotification(title: String, body: String, intentTarget: Class<*>) {
         val channelId = "push_default" // باید با کانال ساخته‌شده یکی باشد
 
-        // مقصد کلیک: MainActivity (در صورت نیاز بعداً به دیپ‌لینک تغییر می‌دهم)
-        val intent = Intent(this, MainActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            // اگر خواستید data را هم پاس بدهیم:
-            // data.forEach { (k, v) -> putExtra(k, v) }
+        val intent = Intent(this, intentTarget).apply {
+            // اگر مقصد لاگین است، پشته را خالی کن
+            if (intentTarget == LoginActivity::class.java) {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            } else {
+                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            }
         }
+        
         val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        val pendingIntent = PendingIntent.getActivity(this, 1001, intent, flags)
+        val pendingIntent = PendingIntent.getActivity(this, System.currentTimeMillis().toInt(), intent, flags)
 
         val builder = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_stat_name)      // ← آیکن استتوس‌بار
