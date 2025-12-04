@@ -9,7 +9,7 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.v2ray.ang.R
 import com.v2ray.ang.ui.MainActivity
-import com.v2ray.ang.ui.LoginActivity
+import com.v2ray.ang.ui.login.LoginActivity // [Fix 1]: پکیج صحیح لاگین
 import com.v2ray.ang.data.auth.TokenStore
 import com.v2ray.ang.net.ApiClient
 import com.v2ray.ang.util.MessageUtil
@@ -24,16 +24,16 @@ class PushMessagingService : FirebaseMessagingService() {
             val action = message.data["action"]
             if (action == "FORCE_LOGOUT") {
                 performForceLogout()
-                return // چون دستور سیستمی بود، دیگر ادامه نده
+                return 
             }
         }
 
-        // 2. اگر پیام از نوع Notification باشد و اپ در فورگراند است (رفتار قبلی)
+        // 2. اگر پیام از نوع Notification باشد
         val notif = message.notification ?: return
         showLocalNotification(
             title = notif.title ?: getString(R.string.app_name),
             body = notif.body ?: "",
-            intentTarget = MainActivity::class.java // نوتیف معمولی میره به Main
+            intentTarget = MainActivity::class.java
         )
     }
 
@@ -46,17 +46,17 @@ class PushMessagingService : FirebaseMessagingService() {
             mmkv.clearAll()
             TokenStore.clear(applicationContext)
 
-            // ب) قطع اتصال VPN اگر روشن است
-            MessageUtil.sendMsg2Service(applicationContext, AppConfig.MSG_STOP_V2RAY, "")
+            // ب) قطع اتصال VPN با استفاده از ثابت صحیح [Fix 2]
+            MessageUtil.sendMsg2Service(applicationContext, AppConfig.MSG_STATE_STOP, "")
 
-            // ج) نمایش نوتیفیکیشن برای اطلاع کاربر
+            // ج) نمایش نوتیفیکیشن
             showLocalNotification(
                 title = getString(R.string.app_name),
                 body = "نشست شما توسط مدیر بسته شد. لطفاً مجدداً وارد شوید.",
-                intentTarget = LoginActivity::class.java // کلیک روی این نوتیف میره به لاگین
+                intentTarget = LoginActivity::class.java
             )
 
-            // د) هدایت آنی به صفحه لاگین (اگر کاربر داخل برنامه باشد)
+            // د) هدایت آنی به صفحه لاگین
             val intent = Intent(applicationContext, LoginActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
             }
@@ -69,26 +69,23 @@ class PushMessagingService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         Log.d("FCM", "new token: $token")
-        val jwt = TokenStore.token(applicationContext) ?: return  // فقط اگر کاربر لاگین است
+        val jwt = TokenStore.token(applicationContext) ?: return
         ApiClient.postUpdateFcmToken(jwt, token) { r ->
             if (r.isFailure) {
-                // + ADD: یک Retry سبک طبق سیاست تو
                 Thread {
                     try {
                         Thread.sleep(1500)
-                        ApiClient.postUpdateFcmToken(jwt, token) { /* نتیجه مهم نیست */ }
+                        ApiClient.postUpdateFcmToken(jwt, token) { }
                     } catch (_: Exception) {}
                 }.start()
             }
         }
     }
 
-    // تابع کمکی نمایش نوتیفیکیشن (با قابلیت تعیین مقصد کلیک)
     private fun showLocalNotification(title: String, body: String, intentTarget: Class<*>) {
-        val channelId = "push_default" // باید با کانال ساخته‌شده یکی باشد
+        val channelId = "push_default"
 
         val intent = Intent(this, intentTarget).apply {
-            // اگر مقصد لاگین است، پشته را خالی کن
             if (intentTarget == LoginActivity::class.java) {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
             } else {
@@ -100,7 +97,7 @@ class PushMessagingService : FirebaseMessagingService() {
         val pendingIntent = PendingIntent.getActivity(this, System.currentTimeMillis().toInt(), intent, flags)
 
         val builder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_stat_name)      // ← آیکن استتوس‌بار
+            .setSmallIcon(R.drawable.ic_stat_name)
             .setContentTitle(title)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
@@ -109,8 +106,12 @@ class PushMessagingService : FirebaseMessagingService() {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setDefaults(NotificationCompat.DEFAULT_ALL)
 
-        with(NotificationManagerCompat.from(this)) {
-            notify(System.currentTimeMillis().toInt(), builder.build())
+        try {
+            with(NotificationManagerCompat.from(this)) {
+                notify(System.currentTimeMillis().toInt(), builder.build())
+            }
+        } catch (e: SecurityException) {
+            // در اندروید ۱۳+ اگر پرمیشن نوتیفیکیشن نباشد ممکن است کرش کند
         }
     }
 }
