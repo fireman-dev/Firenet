@@ -32,48 +32,26 @@ android {
         versionName = "2.0.1"
         multiDexEnabled = true
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-
-    /**
-     * پشتیبانی از ABI_FILTERS:
-     * اگر هنگام بیلد این رو پاس بدی:
-     *
-     *  -PABI_FILTERS=arm64-v8a;armeabi-v7a
-     *      → فقط ARM (موبایل)
-     *
-     *  -PABI_FILTERS=x86;x86_64
-     *      → فقط x86 / x86_64 (امولاتور / دستگاه‌های خاص)
-     *
-     * اگر ABI_FILTERS ست نشه:
-     *      → هر چهار ABI + یک universal ساخته می‌شه مثل قبل.
-     */
-    val abiFilterList = (project.findProperty("ABI_FILTERS") as? String)
-        ?.split(';')
-        ?.filter { it.isNotBlank() }
-
-    splits {
-        abi {
-            isEnable = true
-            reset()
-
-            if (!abiFilterList.isNullOrEmpty()) {
-                // اگر ABI_FILTERS مشخص شده بود، فقط همان‌ها
-                include(*abiFilterList.toTypedArray())
-                // وقتی خودت ABI مشخص می‌کنی، universal نمی‌سازیم
-                isUniversalApk = false
-            } else {
-                // حالت پیش‌فرض: همه ABIها
-                include(
-                    "arm64-v8a",
-                    "armeabi-v7a",
-                    "x86_64",
-                    "x86"
-                )
-                // وقتی ABI_FILTERS خالی است، universal ساخته می‌شود (رفتار قبلی)
-                isUniversalApk = true
+        val abiFilterList = (properties["ABI_FILTERS"] as? String)?.split(';')
+        splits {
+            abi {
+                isEnable = true
+                reset()
+                if (abiFilterList != null && abiFilterList.isNotEmpty()) {
+                    include(*abiFilterList.toTypedArray())
+                } else {
+                    include(
+                        "arm64-v8a",
+                        "armeabi-v7a",
+                        "x86_64",
+                        "x86"
+                    )
+                }
+                isUniversalApk = abiFilterList.isNullOrEmpty()
             }
         }
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     // این بخش برای تعریف تنظیمات امضای دیجیتال اضافه شده است
@@ -134,11 +112,7 @@ android {
         if (isFdroid) {
             val versionCodes =
                 mapOf(
-                    "armeabi-v7a" to 2,
-                    "arm64-v8a" to 1,
-                    "x86" to 4,
-                    "x86_64" to 3,
-                    "universal" to 0
+                    "armeabi-v7a" to 2, "arm64-v8a" to 1, "x86" to 4, "x86_64" to 3, "universal" to 0
                 )
 
             variant.outputs
@@ -146,7 +120,6 @@ android {
                 .forEach { output ->
                     val abi = output.getFilter("ABI") ?: "universal"
                     output.outputFileName = "Firenet_${variant.versionName}-fdroid_${abi}.apk"
-
                     if (versionCodes.containsKey(abi)) {
                         output.versionCodeOverride =
                             (100 * variant.versionCode + versionCodes[abi]!!).plus(5000000)
@@ -156,13 +129,7 @@ android {
                 }
         } else {
             val versionCodes =
-                mapOf(
-                    "armeabi-v7a" to 4,
-                    "arm64-v8a" to 4,
-                    "x86" to 4,
-                    "x86_64" to 4,
-                    "universal" to 4
-                )
+                mapOf("armeabi-v7a" to 4, "arm64-v8a" to 4, "x86" to 4, "x86_64" to 4, "universal" to 4)
 
             variant.outputs
                 .map { it as com.android.build.gradle.internal.api.ApkVariantOutputImpl }
@@ -173,7 +140,6 @@ android {
                         "universal"
 
                     output.outputFileName = "Firenet_${variant.versionName}_${abi}.apk"
-
                     if (versionCodes.containsKey(abi)) {
                         output.versionCodeOverride =
                             (1000000 * versionCodes[abi]!!).plus(variant.versionCode)
@@ -195,135 +161,6 @@ android {
         }
     }
 
-    // ===============================================================
-    //  PLAYSTORE + FDROID   COMBINED APKs
-    // ===============================================================
-
-    fun findReleaseDir(base: File): File? =
-        base.listFiles()?.firstOrNull { it.isDirectory && it.resolve("release").exists() }
-            ?.resolve("release")
-
-    tasks.register("assembleArmCombined") {
-        group = "build"
-        description = "Create ARM Combined APK for Playstore and F-Droid"
-
-        doLast {
-            println(">>> Creating ARM Combined APKs...")
-
-            val outDir = layout.buildDirectory
-                .dir("outputs/combined")
-                .get()
-                .asFile
-            outDir.mkdirs()
-
-            val version = android.defaultConfig.versionName
-
-            // ===============================
-            // PLAYSTORE
-            // ===============================
-            val playstoreBase = layout.buildDirectory
-                .dir("outputs/apk/playstore")
-                .get()
-                .asFile
-
-            val playstoreRelease = findReleaseDir(playstoreBase)
-
-            if (playstoreRelease != null) {
-                val arm64 = File(playstoreRelease, "Firenet_${version}_arm64-v8a.apk")
-                val arm32 = File(playstoreRelease, "Firenet_${version}_armeabi-v7a.apk")
-                val outPlay = File(outDir, "Firenet_${version}_armCombined.apk")
-
-                when {
-                    arm64.exists() -> arm64.copyTo(outPlay, overwrite = true)
-                    arm32.exists() -> arm32.copyTo(outPlay, overwrite = true)
-                    else -> println(">>> ERROR: No Playstore ARM APK found")
-                }
-            }
-
-            // ===============================
-            // FDROID
-            // ===============================
-            val fdroidBase = layout.buildDirectory
-                .dir("outputs/apk/fdroid")
-                .get()
-                .asFile
-
-            val fdroidRelease = findReleaseDir(fdroidBase)
-
-            if (fdroidRelease != null) {
-                val arm64 = File(fdroidRelease, "Firenet_${version}-fdroid_arm64-v8a.apk")
-                val arm32 = File(fdroidRelease, "Firenet_${version}-fdroid_armeabi-v7a.apk")
-                val outFdroid = File(outDir, "Firenet_${version}-fdroid_armCombined.apk")
-
-                when {
-                    arm64.exists() -> arm64.copyTo(outFdroid, overwrite = true)
-                    arm32.exists() -> arm32.copyTo(outFdroid, overwrite = true)
-                    else -> println(">>> ERROR: No FDroid ARM APK found")
-                }
-            }
-        }
-    }
-
-    tasks.register("assembleX86Combined") {
-        group = "build"
-        description = "Create X86 Combined APK for Playstore and F-Droid"
-
-        doLast {
-            println(">>> Creating X86 Combined APKs...")
-
-            val outDir = layout.buildDirectory
-                .dir("outputs/combined")
-                .get()
-                .asFile
-            outDir.mkdirs()
-
-            val version = android.defaultConfig.versionName
-
-            // ===============================
-            // PLAYSTORE
-            // ===============================
-            val playstoreBase = layout.buildDirectory
-                .dir("outputs/apk/playstore")
-                .get()
-                .asFile
-
-            val playstoreRelease = findReleaseDir(playstoreBase)
-
-            if (playstoreRelease != null) {
-                val x86_64 = File(playstoreRelease, "Firenet_${version}_x86_64.apk")
-                val x86 = File(playstoreRelease, "Firenet_${version}_x86.apk")
-                val outPlay = File(outDir, "Firenet_${version}_x86Combined.apk")
-
-                when {
-                    x86_64.exists() -> x86_64.copyTo(outPlay, overwrite = true)
-                    x86.exists() -> x86.copyTo(outPlay, overwrite = true)
-                    else -> println(">>> ERROR: No Playstore X86 APK found")
-                }
-            }
-
-            // ===============================
-            // FDROID
-            // ===============================
-            val fdroidBase = layout.buildDirectory
-                .dir("outputs/apk/fdroid")
-                .get()
-                .asFile
-
-            val fdroidRelease = findReleaseDir(fdroidBase)
-
-            if (fdroidRelease != null) {
-                val x86_64 = File(fdroidRelease, "Firenet_${version}-fdroid_x86_64.apk")
-                val x86 = File(fdroidRelease, "Firenet_${version}-fdroid_x86.apk")
-                val outFdroid = File(outDir, "Firenet_${version}-fdroid_x86Combined.apk")
-
-                when {
-                    x86_64.exists() -> x86_64.copyTo(outFdroid, overwrite = true)
-                    x86.exists() -> x86.copyTo(outFdroid, overwrite = true)
-                    else -> println(">>> ERROR: No FDroid X86 APK found")
-                }
-            }
-        }
-    }
 }
 
 dependencies {

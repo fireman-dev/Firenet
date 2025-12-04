@@ -132,81 +132,38 @@ jobs:
         
     - name: Build APK
       run: |
-        cd ${{ github.workspace }}/Firenet
+        cd ${{ github.workspace }}
+        cd Firenet
         echo "sdk.dir=${ANDROID_HOME}" > local.properties
         chmod 755 gradlew
-
-        # بیلد عادی
-        ./gradlew assembleRelease \
-          -Pandroid.injected.signing.store.file=${{ steps.android_keystore.outputs.filePath }} \
-          -Pandroid.injected.signing.store.password=${{ secrets.APP_KEYSTORE_PASSWORD }} \
-          -Pandroid.injected.signing.key.alias=${{ secrets.APP_KEYSTORE_ALIAS }} \
-          -Pandroid.injected.signing.key.password=${{ secrets.APP_KEY_PASSWORD }}
-
-        # بیلد ARM Combined
-        ./gradlew assembleArmCombined \
-          -Pandroid.injected.signing.store.file=${{ steps.android_keystore.outputs.filePath }} \
-          -Pandroid.injected.signing.store.password=${{ secrets.APP_KEYSTORE_PASSWORD }} \
-          -Pandroid.injected.signing.key.alias=${{ secrets.APP_KEYSTORE_ALIAS }} \
-          -Pandroid.injected.signing.key.password=${{ secrets.APP_KEY_PASSWORD }}
-
-        # بیلد X86 Combined
-        ./gradlew assembleX86Combined \
-          -Pandroid.injected.signing.store.file=${{ steps.android_keystore.outputs.filePath }} \
-          -Pandroid.injected.signing.store.password=${{ secrets.APP_KEYSTORE_PASSWORD }} \
-          -Pandroid.injected.signing.key.alias=${{ secrets.APP_KEYSTORE_ALIAS }} \
-          -Pandroid.injected.signing.key.password=${{ secrets.APP_KEY_PASSWORD }}
-
-    - name: Show built APK files
-      run: |
-        echo ">>> Showing APK files:"
-        ls -R ${{ github.workspace }}/Firenet/app/build/outputs/apk
-
-    - name: Upload arm64-v8a APKs
+        ./gradlew assembleRelease -Pandroid.injected.signing.store.file=${{ steps.android_keystore.outputs.filePath }} -Pandroid.injected.signing.store.password=${{ secrets.APP_KEYSTORE_PASSWORD }} -Pandroid.injected.signing.key.alias=${{ secrets.APP_KEYSTORE_ALIAS }} -Pandroid.injected.signing.key.password=${{ secrets.APP_KEY_PASSWORD }}
+       
+    - name: Upload arm64-v8a APK
       uses: actions/upload-artifact@v4.6.2
-      if: ${{ success() }}
+      if: ${{  success() }}
       with:
         name: arm64-v8a
-        path: ${{ github.workspace }}/Firenet/app/build/outputs/apk/**/release/*arm64-v8a*.apk
-        if-no-files-found: error
+        path: ${{ github.workspace }}/Firenet/app/build/outputs/apk/*/release/*arm64-v8a*.apk
 
-    - name: Upload armeabi-v7a APKs
+    - name: Upload armeabi-v7a APK
       uses: actions/upload-artifact@v4.6.2
-      if: ${{ success() }}
+      if: ${{  success() }}
       with:
         name: armeabi-v7a
-        path: ${{ github.workspace }}/Firenet/app/build/outputs/apk/**/release/*armeabi-v7a*.apk
-        if-no-files-found: error
+        path: ${{ github.workspace }}/Firenet/app/build/outputs/apk/*/release/*armeabi-v7a*.apk
 
-    - name: Upload x86 APKs
+    - name: Upload x86 APK
       uses: actions/upload-artifact@v4.6.2
-      if: ${{ success() }}
+      if: ${{  success() }}
       with:
-        name: x86
-        path: ${{ github.workspace }}/Firenet/app/build/outputs/apk/**/release/*x86.apk
-        if-no-files-found: ignore
-
-    - name: Upload x86_64 APKs
-      uses: actions/upload-artifact@v4.6.2
-      if: ${{ success() }}
-      with:
-        name: x86_64
-        path: ${{ github.workspace }}/Firenet/app/build/outputs/apk/**/release/*x86_64*.apk
-        if-no-files-found: ignore
-
-    - name: Upload universal APKs
-      uses: actions/upload-artifact@v4.6.2
-      if: ${{ success() }}
-      with:
-        name: universal
-        path: ${{ github.workspace }}/Firenet/app/build/outputs/apk/**/release/*universal*.apk
-        if-no-files-found: ignore
+        name: x86-apk
+        path: ${{ github.workspace }}/Firenet/app/build/outputs/apk/*/release/*x86*.apk
 
     - name: Upload to release
       uses: svenstaro/upload-release-action@v2
       if: github.event.inputs.release_tag != ''
       with:
-        file: ${{ github.workspace }}/Firenet/app/build/outputs/apk/**/release/*.apk
+        file: ${{ github.workspace }}/Firenet/app/build/outputs/apk/*/release/*.apk
         tag: ${{ github.event.inputs.release_tag }}
         file_glob: true
         prerelease: true
