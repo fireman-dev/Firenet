@@ -195,69 +195,61 @@ android {
         }
     }
 
-        // ------------------------------
-    //  TWO CUSTOM COMBINED APK TASKS
-    // ------------------------------
+    // ============================================================
+    //  Combined APKs (ARM + ARMv7)  و  (x86 + x86_64)
+    // ============================================================
 
-    // Combined ARM build (arm64 + armeabi-v7a)
     tasks.register("assembleArmCombined") {
         group = "build"
-        description = "Build combined ARM APK (arm64 + armeabi-v7a)"
+        description = "Create combined ARM APK from existing outputs"
 
         doLast {
-            println(">>> Building ARM Combined APK…")
+            println(">>> Creating ARM Combined APK...")
 
-            exec {
-                workingDir("${project.projectDir}")
-                commandLine(
-                    "./gradlew",
-                    "assembleRelease",
-                    "-PABI_FILTERS=arm64-v8a;armeabi-v7a"
-                )
-            }
-
-            val outDir = file("$buildDir/outputs/apk")
+            val outDir = layout.buildDirectory.dir("outputs/combined").get().asFile
             outDir.mkdirs()
 
-            val sourceFile = file("$buildDir/outputs/apk/playstore/release/Firenet_${android.defaultConfig.versionName}_arm64-v8a.apk")
-            val fallbackFile = file("$buildDir/outputs/apk/playstore/release/Firenet_${android.defaultConfig.versionName}_armeabi-v7a.apk")
+            val version = android.defaultConfig.versionName
 
-            val finalOut = File(outDir, "Firenet_${android.defaultConfig.versionName}_armCombined.apk")
+            val basePath = layout.buildDirectory.dir("outputs/apk/playstore").get().asFile
 
-            if (sourceFile.exists()) sourceFile.copyTo(finalOut, overwrite = true)
-            else if (fallbackFile.exists()) fallbackFile.copyTo(finalOut, overwrite = true)
-            else println(">>> ERROR: No ARM APK found to combine!")
+            val arm64 = File(basePath, "release/Firenet_${version}_arm64-v8a.apk")
+            val arm32 = File(basePath, "release/Firenet_${version}_armeabi-v7a.apk")
+
+            val output = File(outDir, "Firenet_${version}_armCombined.apk")
+
+            when {
+                arm64.exists() -> arm64.copyTo(output, overwrite = true)
+                arm32.exists() -> arm32.copyTo(output, overwrite = true)
+                else -> println(">>> ERROR: No ARM APK found")
+            }
         }
     }
 
-    // Combined X86 build (x86 + x86_64)
     tasks.register("assembleX86Combined") {
         group = "build"
-        description = "Build combined X86 APK (x86 + x86_64)"
+        description = "Create combined X86 APK from existing outputs"
 
         doLast {
-            println(">>> Building X86 Combined APK…")
+            println(">>> Creating X86 Combined APK...")
 
-            exec {
-                workingDir("${project.projectDir}")
-                commandLine(
-                    "./gradlew",
-                    "assembleRelease",
-                    "-PABI_FILTERS=x86;x86_64"
-                )
-            }
-
-            val outDir = file("$buildDir/outputs/apk")
+            val outDir = layout.buildDirectory.dir("outputs/combined").get().asFile
             outDir.mkdirs()
 
-            val sourceFile = file("$buildDir/outputs/apk/playstore/release/Firenet_${android.defaultConfig.versionName}_x86_64.apk")
-            val fallbackFile = file("$buildDir/outputs/apk/playstore/release/Firenet_${android.defaultConfig.versionName}_x86.apk")
+            val version = android.defaultConfig.versionName
 
-            val finalOut = File(outDir, "Firenet_${android.defaultConfig.versionName}_x86Combined.apk")
+            val basePath = layout.buildDirectory.dir("outputs/apk/playstore").get().asFile
 
-            if (sourceFile.exists()) sourceFile.copyTo(finalOut, overwrite = true)
-            else if (fallbackFile.exists()) fallbackFile.copyTo(finalOut, overwrite = true)
-            else println(">>> ERROR: No X86 APK found to combine!")
+            val x86_64 = File(basePath, "release/Firenet_${version}_x86_64.apk")
+            val x86 = File(basePath, "release/Firenet_${version}_x86.apk")
+
+            val output = File(outDir, "Firenet_${version}_x86Combined.apk")
+
+            when {
+                x86_64.exists() -> x86_64.copyTo(output, overwrite = true)
+                x86.exists() -> x86.copyTo(output, overwrite = true)
+                else -> println(">>> ERROR: No X86 APK found")
+            }
         }
     }
 }
