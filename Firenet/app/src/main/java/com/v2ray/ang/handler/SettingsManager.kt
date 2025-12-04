@@ -35,8 +35,19 @@ object SettingsManager {
     fun initRoutingRulesets(context: Context) {
         val exist = MmkvManager.decodeRoutingRulesets()
         if (exist.isNullOrEmpty()) {
-            val rulesetList = getPresetRoutingRulesets(context)
-            MmkvManager.encodeRoutingRulesets(rulesetList)
+            // --- تغییر شروع شد ---
+            // به جای getPresetRoutingRulesets(context) که دیفالت (Global) را می‌آورد
+            // مستقیماً فایل روتینگ ایران را می‌خوانیم
+            val iranRules = Utils.readTextFromAssets(context, "custom_routing_white_iran")
+            if (!TextUtils.isEmpty(iranRules)) {
+                val rulesetList = JsonUtil.fromJson(iranRules, Array<RulesetItem>::class.java).toMutableList()
+                MmkvManager.encodeRoutingRulesets(rulesetList)
+            } else {
+                // اگر فایل ایران پیدا نشد، همان دیفالت قبلی را لود کن (Fallback)
+                val rulesetList = getPresetRoutingRulesets(context)
+                MmkvManager.encodeRoutingRulesets(rulesetList)
+            }
+            // --- تغییر پایان یافت ---
         }
     }
 

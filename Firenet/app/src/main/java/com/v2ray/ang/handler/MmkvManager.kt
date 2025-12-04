@@ -520,7 +520,7 @@ object MmkvManager {
         return settingsStorage.decodeString(key)
     }
 
-    /**
+/**
      * Decodes the settings string.
      *
      * @param key The settings key.
@@ -528,6 +528,10 @@ object MmkvManager {
      * @return The settings value.
      */
     fun decodeSettingsString(key: String, defaultValue: String?): String? {
+        // [MODIFIED] Set default routing rules to "custom_routing_white_iran" if not set
+        if (key == PREF_ROUTING_RULESET && !settingsStorage.containsKey(key)) {
+            return "custom_routing_white_iran"
+        }
         return settingsStorage.decodeString(key, defaultValue)
     }
 
