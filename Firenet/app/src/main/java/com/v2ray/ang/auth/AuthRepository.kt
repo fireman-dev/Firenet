@@ -36,18 +36,20 @@ class AuthRepository(private val ctx: Context) {
         val ioScope = CoroutineScope(Dispatchers.IO)
         val mainScope = CoroutineScope(Dispatchers.Main)
 
-        // برای جلوگیری از چندبار کال‌بک
+        // برای جلوگیری از چندبار کال‌بک (تداخل تایم‌اوت و پاسخ سرور)
         val completed = AtomicBoolean(false)
 
         ioScope.launch {
-            // تلاش اصلی: همیشه پاسخ سرور اولویت دارد
             ApiClient.getStatus(token) { result ->
                 if (completed.getAndSet(true)) return@getStatus
 
+                // -----------------------------------------------------------
+                // 1. حالت موفقیت: سرور پاسخ داده است (200 OK)
+                // -----------------------------------------------------------
                 if (result.isSuccess) {
-                    // پاسخ معتبر → کش را آپدیت و برگردان
                     val res = result.getOrNull()
                     if (res != null) {
+                        // ذخیره در کش برای استفاده‌های بعدی (فقط وقتی توکن معتبر است)
                         MmkvManager.saveLastStatus(res)
                         mainScope.launch { cb(Result.success(res)) }
                     } else {
@@ -56,47 +58,56 @@ class AuthRepository(private val ctx: Context) {
                     return@getStatus
                 }
 
-                // شکست: بررسی نوع خطا
-                val msg = result.exceptionOrNull()?.message ?: ""
+                // -----------------------------------------------------------
+                // 2. تحلیل خطا: چرا درخواست ناموفق بود؟
+                // -----------------------------------------------------------
+                val exception = result.exceptionOrNull()
+                val msg = exception?.message ?: ""
 
-                // === شرط جدید: سرویس معلق شده است ===
-                // طبق درخواست: از کش لود نشود، لاگ‌اوت نشود، اما ارور برگردانده شود (تا تست شود)
-                if (msg.contains("سرویس شما توسط ارائه‌دهنده معلق شده است.")) {
+                // الف) سناریوی تعلیق سرویس (طبق درخواست: بدون کش، بدون لاگ‌اوت، نمایش ارور)
+                if (msg.contains("سرویس شما توسط ارائه‌دهنده معلق شده است.") || msg.contains("suspended", ignoreCase = true)) {
+                    // مستقیماً ارور را برمی‌گردانیم تا UI نمایش دهد. سراغ کش نمی‌رویم.
                     mainScope.launch { cb(Result.failure(Exception(msg))) }
                     return@getStatus
                 }
 
-                // اگر توکن نامعتبر/منقضی است یا 401 → به هیچ عنوان از کش استفاده نکن و فورس لاگ‌اوت کن
+                // ب) سناریوی پایان اعتبار توکن (401 / Invalid Token)
+                // این بخش "گیت‌کیپر" است. اگر این خطاها باشد، هرگز نباید به خطوط پایین (لود کش) برسیم.
                 if (
                     msg.contains("401", ignoreCase = true) ||
+                    msg.contains("Token is invalid", ignoreCase = true) ||
                     msg.contains("invalid or expired", ignoreCase = true) ||
-                    msg.contains("Token is invalid or expired", ignoreCase = true)
+                    msg.contains("Unauthenticated", ignoreCase = true)
                 ) {
                     try {
-                        // پاک کردن کش MMKV
+                        Log.e("AuthRepo", "Auth error detected ($msg). Clearing data...")
+                        // پاک‌سازی کامل داده‌ها (Force Logout سمت کلاینت)
                         val mmkv = com.tencent.mmkv.MMKV.defaultMMKV()
                         mmkv.clearAll()
-                        
-                        // پاک کردن توکن ذخیره شده
                         TokenStore.clear(ctx)
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
-
+                    
+                    // بازگشت خطا با تگ مشخص برای هدایت به صفحه لاگین
                     mainScope.launch { cb(Result.failure(Exception("HTTP_401"))) }
                     return@getStatus
                 }
 
-                // سایر خطاهای شبکه/زمان‌بر → تلاش از کش
+                // -----------------------------------------------------------
+                // 3. حالت خطای شبکه / سرور (Timeout, 500, DNS, ...)
+                // -----------------------------------------------------------
+                // فقط در صورتی به اینجا می‌رسیم که خطا 401 یا تعلیق نبوده باشد.
                 val cached = MmkvManager.loadLastStatus()
                 if (cached != null) {
+                    Log.i("AuthRepo", "Loading from cache due to network error: $msg")
                     mainScope.launch { cb(Result.success(cached)) }
                 } else {
-                    mainScope.launch { cb(Result.failure(result.exceptionOrNull() ?: Exception("Network error"))) }
+                    mainScope.launch { cb(Result.failure(exception ?: Exception("Network error"))) }
                 }
             }
 
-            // اختیاراً: سقف انتظار برای تضمین اینکه کال‌بک آویزان نماند
+            // تایم‌اوت کلی برای جلوگیری از هنگ کردن
             withTimeoutOrNull(60_000L) {
                 while (!completed.get()) delay(100)
             }
