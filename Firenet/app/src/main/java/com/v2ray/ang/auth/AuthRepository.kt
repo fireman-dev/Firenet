@@ -59,12 +59,23 @@ class AuthRepository(private val ctx: Context) {
                 // شکست: بررسی نوع خطا
                 val msg = result.exceptionOrNull()?.message ?: ""
 
-                // اگر توکن نامعتبر/منقضی است یا 401 → به هیچ عنوان از کش استفاده نکن
+                // اگر توکن نامعتبر/منقضی است یا 401 → به هیچ عنوان از کش استفاده نکن و فورس لاگ‌اوت کن
                 if (
                     msg.contains("401", ignoreCase = true) ||
                     msg.contains("invalid or expired", ignoreCase = true) ||
                     msg.contains("Token is invalid or expired", ignoreCase = true)
                 ) {
+                    try {
+                        // پاک کردن کش MMKV
+                        val mmkv = com.tencent.mmkv.MMKV.defaultMMKV()
+                        mmkv.clearAll()
+                        
+                        // پاک کردن توکن ذخیره شده
+                        TokenStore.clear(ctx)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+
                     mainScope.launch { cb(Result.failure(Exception("HTTP_401"))) }
                     return@getStatus
                 }
