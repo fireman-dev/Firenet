@@ -59,6 +59,13 @@ class AuthRepository(private val ctx: Context) {
                 // شکست: بررسی نوع خطا
                 val msg = result.exceptionOrNull()?.message ?: ""
 
+                // === شرط جدید: سرویس معلق شده است ===
+                // طبق درخواست: از کش لود نشود، لاگ‌اوت نشود، اما ارور برگردانده شود (تا تست شود)
+                if (msg.contains("سرویس شما توسط ارائه‌دهنده معلق شده است.")) {
+                    mainScope.launch { cb(Result.failure(Exception(msg))) }
+                    return@getStatus
+                }
+
                 // اگر توکن نامعتبر/منقضی است یا 401 → به هیچ عنوان از کش استفاده نکن و فورس لاگ‌اوت کن
                 if (
                     msg.contains("401", ignoreCase = true) ||
