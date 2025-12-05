@@ -90,38 +90,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-//    /**
-//     * Appends a custom configuration server.
-//     * @param server The server configuration to append.
-//     * @return True if the server was successfully appended, false otherwise.
-//     */
-//    fun appendCustomConfigServer(server: String): Boolean {
-//        if (server.contains("inbounds")
-//            && server.contains("outbounds")
-//            && server.contains("routing")
-//        ) {
-//            try {
-//                val config = CustomFmt.parse(server) ?: return false
-//                config.subscriptionId = subscriptionId
-//                val key = MmkvManager.encodeServerConfig("", config)
-//                MmkvManager.encodeServerRaw(key, server)
-//                serverList.add(0, key)
-////                val profile = ProfileLiteItem(
-////                    configType = config.configType,
-////                    subscriptionId = config.subscriptionId,
-////                    remarks = config.remarks,
-////                    server = config.getProxyOutbound()?.getServerAddress(),
-////                    serverPort = config.getProxyOutbound()?.getServerPort(),
-////                )
-//                serversCache.add(0, ServersCache(key, config))
-//                return true
-//            } catch (e: Exception) {
-//                e.printStackTrace()
-//            }
-//        }
-//        return false
-//    }
-
     /**
      * Swaps the positions of two servers.
      * @param fromPosition The initial position of the server.
@@ -147,18 +115,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         serversCache.clear()
         for (guid in serverList) {
             var profile = MmkvManager.decodeServerConfig(guid) ?: continue
-//            var profile = MmkvManager.decodeProfileConfig(guid)
-//            if (profile == null) {
-//                val config = MmkvManager.decodeServerConfig(guid) ?: continue
-//                profile = ProfileLiteItem(
-//                    configType = config.configType,
-//                    subscriptionId = config.subscriptionId,
-//                    remarks = config.remarks,
-//                    server = config.getProxyOutbound()?.getServerAddress(),
-//                    serverPort = config.getProxyOutbound()?.getServerPort(),
-//                )
-//                MmkvManager.encodeServerConfig(guid, config)
-//            }
 
             if (subscriptionId.isNotEmpty() && subscriptionId != profile.subscriptionId) {
                 continue

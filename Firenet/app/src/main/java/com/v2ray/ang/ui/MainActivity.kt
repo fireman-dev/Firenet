@@ -2,71 +2,62 @@ package com.v2ray.ang.ui
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.net.Uri
 import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.Gravity
 import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.widget.ImageButton
+import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.LinearSnapHelper
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.tabs.TabLayout
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.VPN
 import com.v2ray.ang.R
+import com.v2ray.ang.data.auth.AuthRepository
+import com.v2ray.ang.data.auth.TokenStore
 import com.v2ray.ang.databinding.ActivityMainBinding
-import com.v2ray.ang.dto.EConfigType
 import com.v2ray.ang.extension.toast
 import com.v2ray.ang.extension.toastError
 import com.v2ray.ang.handler.AngConfigManager
 import com.v2ray.ang.handler.MigrateManager
 import com.v2ray.ang.handler.MmkvManager
-import com.v2ray.ang.helper.SimpleItemTouchHelperCallback
 import com.v2ray.ang.handler.V2RayServiceManager
+import com.v2ray.ang.net.ApiClient
+import com.v2ray.ang.net.StatusResponse
+import com.v2ray.ang.ui.login.LoginActivity
+import com.v2ray.ang.ui.main.StatusFormatter
 import com.v2ray.ang.util.Utils
 import com.v2ray.ang.viewmodel.MainViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-import com.v2ray.ang.data.auth.AuthRepository
-import com.v2ray.ang.data.auth.TokenStore
-import com.v2ray.ang.net.StatusResponse
-import com.v2ray.ang.ui.login.LoginActivity
-import com.v2ray.ang.ui.main.StatusFormatter
-import androidx.appcompat.app.AppCompatActivity
-
-import android.widget.ImageButton
-import android.widget.Toast
-
-import android.content.IntentFilter
-import android.content.BroadcastReceiver
-import android.content.Context
-
-import com.v2ray.ang.net.ApiClient
-
-import android.widget.TextView
-import android.view.View
-
-import android.graphics.Color
-import androidx.core.view.WindowInsetsControllerCompat
+import kotlin.math.abs
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener {
     private val binding by lazy {
@@ -83,8 +74,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
     }
 
-    // Removed requestSubSettingActivity as SubSettingActivity is deleted
-    
     private val tabGroupListener = object : TabLayout.OnTabSelectedListener {
         override fun onTabSelected(tab: TabLayout.Tab?) {
             val selectId = tab?.tag.toString()
@@ -93,13 +82,10 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             }
         }
 
-        override fun onTabUnselected(tab: TabLayout.Tab?) {
-        }
-
-        override fun onTabReselected(tab: TabLayout.Tab?) {
-        }
+        override fun onTabUnselected(tab: TabLayout.Tab?) {}
+        override fun onTabReselected(tab: TabLayout.Tab?) {}
     }
-    private var mItemTouchHelper: ItemTouchHelper? = null
+
     val mainViewModel: MainViewModel by viewModels()
 
     private val requestPermissionLauncher =
@@ -123,8 +109,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         NONE,
         POST_NOTIFICATIONS
     }
-
-    // Removed scanQRCodeForConfig as ScannerActivity is deleted
 
     private val forceLogoutReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -207,33 +191,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             }
         }
 
-        binding.recyclerView.setHasFixedSize(true)
-        if (MmkvManager.decodeSettingsBool(AppConfig.PREF_DOUBLE_COLUMN_DISPLAY, false)) {
-            binding.recyclerView.layoutManager = GridLayoutManager(this, 2)
-        } else {
-            binding.recyclerView.layoutManager = GridLayoutManager(this, 1)
-        }
-        addCustomDividerToRecyclerView(binding.recyclerView, this, R.drawable.custom_divider)
-        binding.recyclerView.adapter = adapter
-
-        mItemTouchHelper = ItemTouchHelper(SimpleItemTouchHelperCallback(adapter))
-        mItemTouchHelper?.attachToRecyclerView(binding.recyclerView)
-
-        binding.recyclerView.clipToPadding = false
-
-        binding.fab.viewTreeObserver.addOnGlobalLayoutListener(object : android.view.ViewTreeObserver.OnGlobalLayoutListener {
-            override fun onGlobalLayout() {
-                binding.fab.viewTreeObserver.removeOnGlobalLayoutListener(this)
-                val lp = binding.fab.layoutParams as android.view.ViewGroup.MarginLayoutParams
-                val bottomPad = binding.fab.height + lp.bottomMargin + (16 * resources.displayMetrics.density).toInt()
-                binding.recyclerView.setPadding(
-                    binding.recyclerView.paddingLeft,
-                    binding.recyclerView.paddingTop,
-                    binding.recyclerView.paddingRight,
-                    bottomPad
-                )
-            }
-        })
+        setupHorizontalRecyclerView()
 
         binding.navView.setNavigationItemSelectedListener(this)
         TokenStore.token(this)?.let { loadStatus(it) }
@@ -264,6 +222,72 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         })
     }
 
+    private fun setupHorizontalRecyclerView() {
+        binding.recyclerView.setHasFixedSize(true)
+        val layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        binding.recyclerView.layoutManager = layoutManager
+        binding.recyclerView.adapter = adapter
+
+        // تنظیم SnapHelper برای متوقف شدن روی آیتم‌ها (وسط چین)
+        val snapHelper = LinearSnapHelper()
+        snapHelper.attachToRecyclerView(binding.recyclerView)
+
+        // اضافه کردن پدینگ برای اینکه اولین و آخرین آیتم هم بتوانند وسط بیایند
+        binding.recyclerView.post {
+            val width = binding.recyclerView.width
+            // فرض بر این است که ۵ آیتم داریم، پس عرض هر آیتم حدود ۱/۵ عرض صفحه است
+            // اما برای محاسبه دقیق پدینگ: (عرض ریسایکلر - عرض آیتم) / ۲
+            // اینجا تقریبی در نظر میگیریم یا باید داینامیک محاسبه شود
+            // فعلا پدینگ پیش‌فرض در XML کافی است اگر `clipToPadding=false` باشد
+            binding.recyclerView.setPadding(width / 2 - 100, 0, width / 2 - 100, 0)
+        }
+
+        binding.recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                scaleItems(recyclerView)
+            }
+
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                super.onScrollStateChanged(recyclerView, newState)
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    val centerView = snapHelper.findSnapView(layoutManager)
+                    if (centerView != null) {
+                        val position = layoutManager.getPosition(centerView)
+                        if (position != RecyclerView.NO_POSITION && position < mainViewModel.serversCache.size) {
+                            val guid = mainViewModel.serversCache[position].guid
+                            // انتخاب سرور اگر قبلاً انتخاب نشده باشد
+                            if (guid != MmkvManager.getSelectServer()) {
+                                adapter.setSelectServer(guid)
+                            }
+                        }
+                    }
+                }
+            }
+        })
+    }
+
+    private fun scaleItems(recyclerView: RecyclerView) {
+        val centerX = recyclerView.width / 2
+        val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+
+        for (i in 0 until recyclerView.childCount) {
+            val child = recyclerView.getChildAt(i)
+            val childCenterX = (child.left + child.right) / 2
+            val distanceFromCenter = abs(centerX - childCenterX)
+            val scale = 1f - (distanceFromCenter.toFloat() / recyclerView.width) // هر چه دورتر، کوچکتر
+
+            // محدود کردن اسکیل تا خیلی کوچک نشود (مثلاً حداقل ۰.۷)
+            val finalScale = Math.max(0.7f, scale)
+            
+            child.scaleX = finalScale
+            child.scaleY = finalScale
+            
+            // تغییر آلفا برای آیتم‌های دورتر
+            child.alpha = Math.max(0.5f, scale)
+        }
+    }
+
     override fun onDestroy() {
         if (isForceLogoutReceiverRegistered) {
             try { unregisterReceiver(forceLogoutReceiver) } catch (_: IllegalArgumentException) {}
@@ -276,6 +300,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     private fun setupViewModel() {
         mainViewModel.updateListAction.observe(this) { index ->
             if (index >= 0) adapter.notifyItemChanged(index) else adapter.notifyDataSetChanged()
+            // اسکرول به سرور انتخاب شده بعد از آپدیت لیست
+            scrollToSelected()
         }
         mainViewModel.updateTestResultAction.observe(this) { setTestState(it) }
 
@@ -301,6 +327,22 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
         mainViewModel.startListenBroadcast()
         mainViewModel.initAssets(assets)
+    }
+
+    private fun scrollToSelected() {
+        val selected = MmkvManager.getSelectServer()
+        if (!selected.isNullOrEmpty()) {
+            val pos = mainViewModel.getPosition(selected)
+            if (pos >= 0) {
+                 binding.recyclerView.post {
+                    (binding.recyclerView.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(pos, 0)
+                     // یک تاخیر کوچک برای اعمال اسکیل پس از اسکرول
+                     binding.recyclerView.postDelayed({
+                         scaleItems(binding.recyclerView)
+                     }, 100)
+                 }
+            }
+        }
     }
 
     private fun migrateLegacy() {
@@ -400,7 +442,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.per_app_proxy_settings -> startActivity(Intent(this, PerAppProxyActivity::class.java))
-            // Changed to simple startActivity as requestSubSettingActivity is removed
             R.id.routing_setting -> startActivity(Intent(this, RoutingSettingActivity::class.java))
             R.id.user_asset_setting -> startActivity(Intent(this, UserAssetActivity::class.java))
             R.id.settings -> startActivity(
