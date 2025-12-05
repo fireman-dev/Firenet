@@ -5,127 +5,168 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#E0E5EC"
+    android:background="@drawable/bg_glass_gradient"
     android:layoutDirection="rtl">
 
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cardLogo"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+    <View
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:background="@drawable/ic_circle"
+        android:backgroundTint="#4DFFFFFF"
+        android:translationX="-40dp"
+        android:translationY="-40dp"
+        app:layout_constraintStart_toStartOf="@+id/glassContainer"
+        app:layout_constraintTop_toTopOf="@+id/glassContainer" />
+
+    <ImageView
+        android:id="@+id/ivLogo"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
         android:layout_marginTop="60dp"
-        app:cardBackgroundColor="#E0E5EC"
-        app:cardCornerRadius="25dp"
-        app:cardElevation="8dp"
+        android:src="@mipmap/ic_launcher"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="20dp"
-            android:src="@mipmap/ic_launcher"
-            android:contentDescription="@string/app_name" />
-    </androidx.cardview.widget.CardView>
+        app:layout_constraintTop_toTopOf="parent"
+        android:elevation="10dp"/>
 
     <TextView
-        android:id="@+id/tvWelcome"
+        android:id="@+id/tvBrand"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
         android:text="@string/app_name"
-        android:textColor="#4A4A4A"
-        android:textSize="24sp"
+        android:textColor="#FFFFFF"
+        android:textSize="22sp"
         android:textStyle="bold"
+        android:layout_marginTop="16dp"
+        android:letterSpacing="0.05"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/cardLogo" />
+        app:layout_constraintTop_toBottomOf="@+id/ivLogo" />
 
-    <TextView
-        android:layout_width="wrap_content"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/glassContainer"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="لطفا وارد حساب کاربری خود شوید"
-        android:textColor="#7D8CA3"
-        android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvWelcome" />
-
-    <LinearLayout
-        android:id="@+id/inputContainer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingHorizontal="32dp"
+        android:layout_marginHorizontal="32dp"
+        android:background="@drawable/bg_glass_card"
+        android:padding="24dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvWelcome"
-        app:layout_constraintVertical_bias="0.2">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvBrand"
+        app:layout_constraintVertical_bias="0.4">
+
+        <TextView
+            android:id="@+id/tvLoginTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="خوش‌آمدید"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tvLoginSub"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="جهت ادامه وارد حساب خود شوید"
+            android:textColor="#CCFFFFFF"
+            android:textSize="12sp"
+            android:layout_marginTop="4dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvLoginTitle" />
 
         <EditText
             android:id="@+id/etUser"
-            android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:layout_marginBottom="20dp"
-            android:background="@drawable/bg_neumorph_input"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/bg_glass_input"
             android:drawableStart="@drawable/ic_image_24dp"
-            android:drawableTint="#7D8CA3"
             android:drawablePadding="12dp"
+            android:drawableTint="#FFFFFF"
             android:hint="نام کاربری"
             android:inputType="textPersonName"
             android:paddingHorizontal="16dp"
-            android:textColor="#4A4A4A"
-            android:textColorHint="#99A3B1"
-            android:textSize="14sp" />
+            android:textColor="#FFFFFF"
+            android:textColorHint="#99FFFFFF"
+            android:textSize="14sp"
+            android:maxLines="1"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvLoginSub" />
 
         <EditText
             android:id="@+id/etPass"
-            android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:layout_marginBottom="30dp"
-            android:background="@drawable/bg_neumorph_input"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_glass_input"
             android:drawableStart="@drawable/ic_lock_24dp"
-            android:drawableTint="#7D8CA3"
             android:drawablePadding="12dp"
+            android:drawableTint="#FFFFFF"
             android:hint="رمز عبور"
             android:inputType="textPassword"
             android:paddingHorizontal="16dp"
-            android:textColor="#4A4A4A"
-            android:textColorHint="#99A3B1"
-            android:textSize="14sp" />
+            android:textColor="#FFFFFF"
+            android:textColorHint="#99FFFFFF"
+            android:textSize="14sp"
+            android:maxLines="1"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/etUser" />
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnLogin"
-            android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:background="@drawable/bg_neumorph_button"
-            android:text="ورود به سامانه"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_marginTop="32dp"
+            android:background="@drawable/bg_glass_button"
+            android:text="ورود به حساب"
             android:textColor="#FFFFFF"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:stateListAnimator="@null" />
+            android:stateListAnimator="@null"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/etPass"
+            app:layout_constraintBottom_toBottomOf="parent"/>
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <ImageButton
-        android:id="@+id/btnSupport"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_margin="24dp"
-        android:background="@drawable/bg_neumorph_input"
-        android:src="@drawable/ic_feedback_24dp"
-        android:padding="12dp"
-        app:tint="#7D8CA3"
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:layout_marginBottom="32dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <ImageButton
+            android:id="@+id/btnSupport"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:background="@drawable/bg_glass_input"
+            android:src="@drawable/ic_feedback_24dp"
+            android:padding="10dp"
+            app:tint="#FFFFFF"
+            android:contentDescription="پشتیبانی" />
+            
+    </LinearLayout>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="نسخه 2.0.1"
-        android:textColor="#7D8CA3"
-        android:textSize="12sp"
-        android:layout_marginBottom="40dp"
+        android:text="v2.0.1"
+        android:textColor="#80FFFFFF"
+        android:textSize="11sp"
+        android:fontFamily="sans-serif-light"
+        android:layout_marginBottom="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
