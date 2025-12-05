@@ -1,103 +1,133 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_login"
-    tools:context=".LoginActivity">
+    android:background="#E0E5EC"
+    android:layoutDirection="rtl">
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/etUser1"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-        android:layout_width="271dp"
-        android:layout_height="70dp"
-        android:layout_marginStart="70dp"
-        android:layout_marginTop="240dp"
-        android:layout_marginEnd="70dp"
-        android:layout_marginBottom="16dp"
-        app:hintTextColor="@color/hint_black"
-        android:hint="نام کاربری"
-        android:textColorHint="@android:color/black"
-        android:background="@drawable/rounded_box"
-        app:boxStrokeWidth="0dp"
-        app:boxStrokeColor="@android:color/transparent"
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardLogo"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_marginTop="60dp"
+        app:cardBackgroundColor="#E0E5EC"
+        app:cardCornerRadius="25dp"
+        app:cardElevation="8dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etUser"
+        <ImageView
             android:layout_width="match_parent"
-            android:layout_height="65dp"
-            android:minHeight="72dp"
-            android:textColor="@android:color/black"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            tools:ignore="TouchTargetSizeCheck" />
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/etPass1"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-        android:layout_width="271dp"
-        android:layout_height="70dp"
-        android:layout_marginStart="70dp"
-        android:layout_marginTop="310dp"
-        android:layout_marginEnd="70dp"
-        app:hintTextColor="@color/hint_black"
-        android:hint="رمزعبور"
-        android:textColorHint="@android:color/black"
-        android:background="@drawable/rounded_box"
-        app:endIconMode="password_toggle"
-        app:boxStrokeWidth="0dp"
-        app:boxStrokeColor="@android:color/transparent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etPass"
-            android:layout_width="match_parent"
-            android:layout_height="65dp"
-            android:minHeight="72dp"
-            android:textColor="@android:color/black"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:inputType="textPassword"
-            tools:ignore="TouchTargetSizeCheck" />
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <Button
-        android:id="@+id/btnLogin"
-        android:layout_width="271dp"
-        android:layout_height="55dp"
-        android:layout_marginTop="200dp"
-        android:text="ورود"
-        android:textAlignment="center"
-        android:textColor="@android:color/black"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:background="@drawable/rounded_box"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+            android:layout_height="match_parent"
+            android:padding="20dp"
+            android:src="@mipmap/ic_launcher"
+            android:contentDescription="@string/app_name" />
+    </androidx.cardview.widget.CardView>
 
     <TextView
-        android:id="@+id/tvTitle"
-        android:layout_width="286dp"
-        android:layout_height="66dp"
-        android:text="Firenet"
-        android:textAlignment="center"
-        android:translationY="25dp"
-        android:textSize="28sp"
-        android:textStyle="normal|bold"
-        android:textColor="@android:color/black"
+        android:id="@+id/tvWelcome"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="@string/app_name"
+        android:textColor="#4A4A4A"
+        android:textSize="24sp"
+        android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.496"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.407" />
+        app:layout_constraintTop_toBottomOf="@+id/cardLogo" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="لطفا وارد حساب کاربری خود شوید"
+        android:textColor="#7D8CA3"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvWelcome" />
+
+    <LinearLayout
+        android:id="@+id/inputContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="32dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvWelcome"
+        app:layout_constraintVertical_bias="0.2">
+
+        <EditText
+            android:id="@+id/etUser"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:layout_marginBottom="20dp"
+            android:background="@drawable/bg_neumorph_input"
+            android:drawableStart="@drawable/ic_image_24dp"
+            android:drawableTint="#7D8CA3"
+            android:drawablePadding="12dp"
+            android:hint="نام کاربری"
+            android:inputType="textPersonName"
+            android:paddingHorizontal="16dp"
+            android:textColor="#4A4A4A"
+            android:textColorHint="#99A3B1"
+            android:textSize="14sp" />
+
+        <EditText
+            android:id="@+id/etPass"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:layout_marginBottom="30dp"
+            android:background="@drawable/bg_neumorph_input"
+            android:drawableStart="@drawable/ic_lock_24dp"
+            android:drawableTint="#7D8CA3"
+            android:drawablePadding="12dp"
+            android:hint="رمز عبور"
+            android:inputType="textPassword"
+            android:paddingHorizontal="16dp"
+            android:textColor="#4A4A4A"
+            android:textColorHint="#99A3B1"
+            android:textSize="14sp" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnLogin"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:background="@drawable/bg_neumorph_button"
+            android:text="ورود به سامانه"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:stateListAnimator="@null" />
+
+    </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/btnSupport"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_margin="24dp"
+        android:background="@drawable/bg_neumorph_input"
+        android:src="@drawable/ic_feedback_24dp"
+        android:padding="12dp"
+        app:tint="#7D8CA3"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="نسخه 2.0.1"
+        android:textColor="#7D8CA3"
+        android:textSize="12sp"
+        android:layout_marginBottom="40dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
