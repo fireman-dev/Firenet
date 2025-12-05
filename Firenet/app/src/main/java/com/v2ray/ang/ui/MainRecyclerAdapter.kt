@@ -1,6 +1,7 @@
 package com.v2ray.ang.ui
 
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.text.TextUtils
 import android.util.Log
@@ -65,9 +66,8 @@ class MainRecyclerAdapter(val activity: MainActivity) : RecyclerView.Adapter<Mai
             // کلیک برای انتخاب دستی (که باعث اسکرول شدن به وسط در اکتیویتی می‌شود)
             holder.itemView.setOnClickListener {
                 setSelectServer(guid)
-                // اسکرول به پوزیشن این آیتم تا وسط بیاید
-                (mActivity.binding.recyclerView.layoutManager as? androidx.recyclerview.widget.LinearLayoutManager)
-                    ?.scrollToPositionWithOffset(position, mActivity.binding.recyclerView.width / 2 - 100)
+                // اسکرول به پوزیشن این آیتم تا وسط بیاید از طریق متد عمومی اکتیویتی
+                mActivity.scrollToPositionCentered(position)
             }
         }
     }

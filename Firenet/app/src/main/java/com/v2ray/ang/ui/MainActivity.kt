@@ -288,6 +288,19 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
     }
 
+    /**
+     * Public helper to scroll RecyclerView to a position with center offset.
+     * Used by Adapter to avoid accessing private binding.
+     */
+    fun scrollToPositionCentered(position: Int) {
+        if (position >= 0 && position < adapter.itemCount) {
+             binding.recyclerView.post {
+                 val width = binding.recyclerView.width
+                 (binding.recyclerView.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(position, width / 2 - 100)
+             }
+        }
+    }
+
     override fun onDestroy() {
         if (isForceLogoutReceiverRegistered) {
             try { unregisterReceiver(forceLogoutReceiver) } catch (_: IllegalArgumentException) {}
@@ -335,7 +348,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             val pos = mainViewModel.getPosition(selected)
             if (pos >= 0) {
                  binding.recyclerView.post {
-                    (binding.recyclerView.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(pos, 0)
+                    (binding.recyclerView.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(pos, binding.recyclerView.width / 2 - 100)
                      // یک تاخیر کوچک برای اعمال اسکیل پس از اسکرول
                      binding.recyclerView.postDelayed({
                          scaleItems(binding.recyclerView)
