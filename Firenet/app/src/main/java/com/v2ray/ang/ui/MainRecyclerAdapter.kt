@@ -20,7 +20,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MainRecyclerAdapter(val activity: MainActivity) : RecyclerView.Adapter<MainRecyclerAdapter.BaseViewHolder>() {
-    
     companion object {
         private const val VIEW_TYPE_ITEM = 1
     }
@@ -35,52 +34,38 @@ class MainRecyclerAdapter(val activity: MainActivity) : RecyclerView.Adapter<Mai
             val guid = mActivity.mainViewModel.serversCache[position].guid
             val profile = mActivity.mainViewModel.serversCache[position].profile
             
-            // نام سرور
             holder.itemMainBinding.tvName.text = profile.remarks
 
-            // بررسی وضعیت انتخاب
             val isSelected = (guid == MmkvManager.getSelectServer())
 
             if (isSelected) {
-                // --- حالت فعال (Active) ---
-                
-                // 1. تغییر دایره دور (مثلا رنگی شود)
+                // Active State
+                holder.itemMainBinding.layoutIndicator.setBackgroundResource(R.drawable.bg_glass_input) // Assuming active style
                 holder.itemMainBinding.layoutIndicator.backgroundTintList = 
                     ColorStateList.valueOf(ContextCompat.getColor(mActivity, R.color.colorAccent))
                 
-                // 2. تنظیم عکس سرور روشن (لطفا عکس مربوطه را در drawable قرار دهید)
-                // اگر عکس ندارید فعلا از یک آیکون موجود استفاده میکند
-                // holder.itemMainBinding.ivStatusIcon.setImageResource(R.drawable.ic_server_active) 
-                holder.itemMainBinding.ivStatusIcon.setImageResource(R.drawable.ic_routing_24dp) // موقت
+                holder.itemMainBinding.ivStatusIcon.setImageResource(R.drawable.ic_server_active)
                 holder.itemMainBinding.ivStatusIcon.setColorFilter(Color.WHITE)
 
-                // 3. نمایش کامل متن (بدون محدودیت خط)
-                holder.itemMainBinding.tvName.maxLines = 10 
-                holder.itemMainBinding.tvName.ellipsize = null
+                holder.itemMainBinding.tvName.maxLines = 2
                 holder.itemMainBinding.tvName.setTextColor(ContextCompat.getColor(mActivity, R.color.colorAccent))
-
+                holder.itemMainBinding.tvName.ellipsize = null
             } else {
-                // --- حالت عادی (Idle/Hadi) ---
-
-                // 1. دایره کمرنگ
+                // Idle State
+                holder.itemMainBinding.layoutIndicator.setBackgroundResource(R.drawable.bg_glass_input)
                 holder.itemMainBinding.layoutIndicator.backgroundTintList = 
                     ColorStateList.valueOf(Color.parseColor("#33FFFFFF"))
 
-                // 2. تنظیم عکس سرور عادی
-                // holder.itemMainBinding.ivStatusIcon.setImageResource(R.drawable.ic_server_idle)
-                holder.itemMainBinding.ivStatusIcon.setImageResource(R.drawable.ic_routing_24dp) // موقت
+                holder.itemMainBinding.ivStatusIcon.setImageResource(R.drawable.ic_server_idle)
                 holder.itemMainBinding.ivStatusIcon.setColorFilter(Color.LTGRAY)
 
-                // 3. نمایش متن تا 2 خط (کاملتر از قبل اما نه خیلی زیاد)
-                holder.itemMainBinding.tvName.maxLines = 2
-                holder.itemMainBinding.tvName.ellipsize = TextUtils.TruncateAt.END
+                holder.itemMainBinding.tvName.maxLines = 1
                 holder.itemMainBinding.tvName.setTextColor(Color.WHITE)
+                holder.itemMainBinding.tvName.ellipsize = TextUtils.TruncateAt.END
             }
 
-            // کلیک روی آیتم
             holder.itemView.setOnClickListener {
                 setSelectServer(guid)
-                // اسکرول خودکار به وسط صفحه
                 mActivity.scrollToPositionCentered(position)
             }
         }
@@ -90,14 +75,10 @@ class MainRecyclerAdapter(val activity: MainActivity) : RecyclerView.Adapter<Mai
         val selected = MmkvManager.getSelectServer()
         if (guid != selected) {
             MmkvManager.setSelectServer(guid)
-            
-            // رفرش کردن آیتم قبلی (برای خاموش شدن)
             if (!TextUtils.isEmpty(selected)) {
                 notifyItemChanged(mActivity.mainViewModel.getPosition(selected.orEmpty()))
             }
-            // رفرش کردن آیتم جدید (برای روشن شدن)
             notifyItemChanged(mActivity.mainViewModel.getPosition(guid))
-            
             if (isRunning) {
                 V2RayServiceManager.stopVService(mActivity)
                 mActivity.lifecycleScope.launch {
