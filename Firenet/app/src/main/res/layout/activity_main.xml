@@ -19,7 +19,7 @@
             android:id="@+id/bg_active"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/bg_glass_gradient"
+            android:background="@drawable/bg_glass_gradient_active"
             android:visibility="invisible"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -36,15 +36,21 @@
             android:orientation="horizontal"
             app:layout_constraintTop_toTopOf="parent">
 
-            <ImageButton
-                android:id="@+id/btnMenu"
+            <FrameLayout
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:background="@drawable/bg_glass_button"
-                android:contentDescription="@string/menu"
-                android:padding="12dp"
-                android:src="@drawable/ic_menu"
-                app:tint="#FFFFFF" />
+                android:background="@drawable/bg_glass_button">
+                <ImageButton
+                    android:id="@+id/btnMenu"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="@string/menu"
+                    android:padding="12dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_menu"
+                    app:tint="#FFFFFF" />
+            </FrameLayout>
 
             <TextView
                 android:id="@+id/tvTitle"
@@ -55,18 +61,24 @@
                 android:letterSpacing="0.05"
                 android:text="@string/app_name"
                 android:textColor="#FFFFFF"
-                android:textSize="20sp"
+                android:textSize="22sp"
                 android:textStyle="bold" />
 
-            <ImageButton
-                android:id="@+id/btnLogout"
+            <FrameLayout
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:background="@drawable/bg_glass_button"
-                android:contentDescription="@string/logout"
-                android:padding="12dp"
-                android:src="@drawable/ic_logout"
-                app:tint="#FFFFFF" />
+                android:background="@drawable/bg_glass_button">
+                <ImageButton
+                    android:id="@+id/btnLogout"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="@string/logout"
+                    android:padding="12dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_logout"
+                    app:tint="#FFFFFF" />
+            </FrameLayout>
         </LinearLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -87,35 +99,41 @@
                 android:layout_height="wrap_content"
                 android:text="وضعیت سرویس"
                 android:textColor="#FFFFFF"
-                android:textSize="18sp"
+                android:textSize="20sp"
                 android:textStyle="bold"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
-                android:id="@+id/tvTrafficSummary"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="-- / --"
-                android:textColor="#CCFFFFFF"
-                android:textSize="14sp"
+                android:layout_marginTop="16dp"
+                android:orientation="vertical"
+                android:gravity="center"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tvUserStatus" />
+                app:layout_constraintTop_toBottomOf="@+id/tvUserStatus">
 
-            <TextView
-                android:id="@+id/tvDaysSummary"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="-- روز باقی‌مانده"
-                android:textColor="#99FFFFFF"
-                android:textSize="12sp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tvTrafficSummary" />
+                <TextView
+                    android:id="@+id/tvTrafficSummary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="-- / --"
+                    android:textColor="#CCFFFFFF"
+                    android:textSize="16sp"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:id="@+id/tvDaysSummary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="-- روز باقی‌مانده"
+                    android:textColor="#CCFFFFFF"
+                    android:textSize="16sp" 
+                    android:textStyle="bold"/>
+            </LinearLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -145,19 +163,26 @@
             app:layout_constraintTop_toBottomOf="@+id/tab_group"
             app:trackColor="#33FFFFFF" />
 
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline_center"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.55" />
+
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/layout_connect"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
+            app:layout_constraintBottom_toTopOf="@+id/guideline_center"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/box_status">
+            app:layout_constraintTop_toTopOf="@+id/guideline_center">
 
             <ImageView
                 android:id="@+id/ring1"
-                android:layout_width="120dp"
-                android:layout_height="120dp"
+                android:layout_width="140dp"
+                android:layout_height="140dp"
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_arc_ring"
                 android:visibility="invisible"
@@ -168,8 +193,8 @@
 
             <ImageView
                 android:id="@+id/ring2"
-                android:layout_width="160dp"
-                android:layout_height="160dp"
+                android:layout_width="180dp"
+                android:layout_height="180dp"
                 android:rotation="120"
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_arc_ring"
@@ -181,8 +206,8 @@
 
             <ImageView
                 android:id="@+id/ring3"
-                android:layout_width="200dp"
-                android:layout_height="200dp"
+                android:layout_width="220dp"
+                android:layout_height="220dp"
                 android:rotation="240"
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_arc_ring"
@@ -198,16 +223,17 @@
                 android:layout_height="wrap_content"
                 android:backgroundTint="@android:color/transparent"
                 android:contentDescription="@string/title_service_start_config"
-                android:elevation="0dp"
                 app:borderWidth="0dp"
-                app:elevation="0dp"
+                app:elevation="6dp"
+                app:fabCustomSize="90dp"
+                app:maxImageSize="90dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:maxImageSize="80dp"
                 app:srcCompat="@drawable/connect_button"
-                app:tint="@null" />
+                app:tint="@null"
+                app:rippleColor="@android:color/transparent"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -215,10 +241,10 @@
             android:id="@+id/tvConnectionStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="24dp"
             android:text="@string/not_connected"
             android:textColor="#FFFFFF"
-            android:textSize="18sp"
+            android:textSize="20sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -228,13 +254,13 @@
             android:id="@+id/layout_test"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="12dp"
             android:background="@drawable/bg_glass_input"
             android:clickable="true"
             android:focusable="true"
             android:gravity="center"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="8dp"
+            android:paddingHorizontal="20dp"
+            android:paddingVertical="10dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tvConnectionStatus">
@@ -245,7 +271,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/connection_test_pending"
                 android:textColor="#CCFFFFFF"
-                android:textSize="12sp" />
+                android:textSize="14sp" />
         </LinearLayout>
 
         <FrameLayout
@@ -255,7 +281,7 @@
             android:layout_marginHorizontal="16dp"
             android:layout_marginBottom="24dp"
             android:background="@drawable/bg_glass_card"
-            android:paddingVertical="12dp"
+            android:paddingVertical="16dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent">
