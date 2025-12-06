@@ -64,24 +64,23 @@ class AuthRepository(private val ctx: Context) {
                 val exception = result.exceptionOrNull()
                 val msg = exception?.message ?: ""
 
-                // الف) سناریوی تعلیق سرویس (طبق درخواست: بدون کش، بدون لاگ‌اوت، نمایش ارور)
-                if (msg.contains("سرویس شما توسط ارائه‌دهنده معلق شده است.") || msg.contains("suspended", ignoreCase = true)) {
-                    // مستقیماً ارور را برمی‌گردانیم تا UI نمایش دهد. سراغ کش نمی‌رویم.
-                    mainScope.launch { cb(Result.failure(Exception(msg))) }
+                // الف) تشخیص ساسپند بودن (مهم: قبل از لود کش بررسی شود)
+                if (msg.contains("HTTP_403", true) || 
+                    msg.contains("suspended", true) || 
+                    msg.contains("سرویس شما مسدود", true)) {
+                    
+                    // بازگشت خطای مشخص برای ساسپند - بدون لود کش
+                    mainScope.launch { cb(Result.failure(Exception("HTTP_403"))) }
                     return@getStatus
                 }
 
-                // ب) سناریوی پایان اعتبار توکن (401 / Invalid Token)
-                // این بخش "گیت‌کیپر" است. اگر این خطاها باشد، هرگز نباید به خطوط پایین (لود کش) برسیم.
-                if (
-                    msg.contains("401", ignoreCase = true) ||
-                    msg.contains("Token is invalid", ignoreCase = true) ||
-                    msg.contains("invalid or expired", ignoreCase = true) ||
-                    msg.contains("Unauthenticated", ignoreCase = true)
-                ) {
+                // ب) تشخیص عدم اعتبار توکن
+                if (msg.contains("HTTP_401", true) ||
+                    msg.contains("Token is invalid", true) ||
+                    msg.contains("invalid or expired", true) ||
+                    msg.contains("Unauthenticated", true)) {
+                    
                     try {
-                        Log.e("AuthRepo", "Auth error detected ($msg). Clearing data...")
-                        // پاک‌سازی کامل داده‌ها (Force Logout سمت کلاینت)
                         val mmkv = com.tencent.mmkv.MMKV.defaultMMKV()
                         mmkv.clearAll()
                         TokenStore.clear(ctx)
@@ -100,7 +99,6 @@ class AuthRepository(private val ctx: Context) {
                 // فقط در صورتی به اینجا می‌رسیم که خطا 401 یا تعلیق نبوده باشد.
                 val cached = MmkvManager.loadLastStatus()
                 if (cached != null) {
-                    Log.i("AuthRepo", "Loading from cache due to network error: $msg")
                     mainScope.launch { cb(Result.success(cached)) }
                 } else {
                     mainScope.launch { cb(Result.failure(exception ?: Exception("Network error"))) }

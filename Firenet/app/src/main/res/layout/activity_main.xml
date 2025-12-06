@@ -164,106 +164,101 @@
             app:trackColor="#33FFFFFF" />
 
         <androidx.constraintlayout.widget.Guideline
-            android:id="@+id/guideline_center"
+            android:id="@+id/guideline_vertical"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            app:layout_constraintGuide_percent="0.55" />
+            app:layout_constraintGuide_percent="0.45" />
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/layout_connect"
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline_horizontal"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:layout_constraintBottom_toTopOf="@+id/guideline_center"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/guideline_center">
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.25" />
 
-            <ImageView
-                android:id="@+id/ring1"
-                android:layout_width="140dp"
-                android:layout_height="140dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_arc_ring"
-                android:visibility="invisible"
-                app:layout_constraintBottom_toBottomOf="@+id/fab"
-                app:layout_constraintEnd_toEndOf="@+id/fab"
-                app:layout_constraintStart_toStartOf="@+id/fab"
-                app:layout_constraintTop_toTopOf="@+id/fab" />
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@android:color/transparent"
+            android:contentDescription="@string/title_service_start_config"
+            app:borderWidth="0dp"
+            app:elevation="6dp"
+            app:fabCustomSize="90dp"
+            app:maxImageSize="90dp"
+            app:rippleColor="@android:color/transparent"
+            app:srcCompat="@drawable/connect_button"
+            app:tint="@null"
+            app:layout_constraintTop_toTopOf="@+id/guideline_vertical"
+            app:layout_constraintStart_toStartOf="@+id/guideline_horizontal"
+            app:layout_constraintEnd_toEndOf="@+id/guideline_horizontal" />
 
-            <ImageView
-                android:id="@+id/ring2"
-                android:layout_width="180dp"
-                android:layout_height="180dp"
-                android:rotation="120"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_arc_ring"
-                android:visibility="invisible"
-                app:layout_constraintBottom_toBottomOf="@+id/fab"
-                app:layout_constraintEnd_toEndOf="@+id/fab"
-                app:layout_constraintStart_toStartOf="@+id/fab"
-                app:layout_constraintTop_toTopOf="@+id/fab" />
+        <ImageView
+            android:id="@+id/ring1"
+            android:layout_width="140dp"
+            android:layout_height="140dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_arc_ring"
+            android:visibility="invisible"
+            app:layout_constraintStart_toStartOf="@+id/fab"
+            app:layout_constraintEnd_toEndOf="@+id/fab"
+            app:layout_constraintTop_toTopOf="@+id/fab"
+            app:layout_constraintBottom_toBottomOf="@+id/fab" />
 
-            <ImageView
-                android:id="@+id/ring3"
-                android:layout_width="220dp"
-                android:layout_height="220dp"
-                android:rotation="240"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_arc_ring"
-                android:visibility="invisible"
-                app:layout_constraintBottom_toBottomOf="@+id/fab"
-                app:layout_constraintEnd_toEndOf="@+id/fab"
-                app:layout_constraintStart_toStartOf="@+id/fab"
-                app:layout_constraintTop_toTopOf="@+id/fab" />
+        <ImageView
+            android:id="@+id/ring2"
+            android:layout_width="180dp"
+            android:layout_height="180dp"
+            android:rotation="120"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_arc_ring"
+            android:visibility="invisible"
+            app:layout_constraintStart_toStartOf="@+id/fab"
+            app:layout_constraintEnd_toEndOf="@+id/fab"
+            app:layout_constraintTop_toTopOf="@+id/fab"
+            app:layout_constraintBottom_toBottomOf="@+id/fab" />
 
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/fab"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:backgroundTint="@android:color/transparent"
-                android:contentDescription="@string/title_service_start_config"
-                app:borderWidth="0dp"
-                app:elevation="6dp"
-                app:fabCustomSize="90dp"
-                app:maxImageSize="90dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/connect_button"
-                app:tint="@null"
-                app:rippleColor="@android:color/transparent"/>
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
+        <ImageView
+            android:id="@+id/ring3"
+            android:layout_width="220dp"
+            android:layout_height="220dp"
+            android:rotation="240"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_arc_ring"
+            android:visibility="invisible"
+            app:layout_constraintStart_toStartOf="@+id/fab"
+            app:layout_constraintEnd_toEndOf="@+id/fab"
+            app:layout_constraintTop_toTopOf="@+id/fab"
+            app:layout_constraintBottom_toBottomOf="@+id/fab" />
 
         <TextView
             android:id="@+id/tvConnectionStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
+            android:layout_marginEnd="16dp"
             android:text="@string/not_connected"
             android:textColor="#FFFFFF"
             android:textSize="20sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/layout_connect" />
+            app:layout_constraintBottom_toBottomOf="@+id/fab"
+            app:layout_constraintTop_toTopOf="@+id/fab"
+            app:layout_constraintEnd_toStartOf="@+id/fab" />
 
         <LinearLayout
             android:id="@+id/layout_test"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="24dp"
             android:background="@drawable/bg_glass_input"
             android:clickable="true"
             android:focusable="true"
             android:gravity="center"
-            android:paddingHorizontal="20dp"
+            android:paddingHorizontal="24dp"
             android:paddingVertical="10dp"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/fab"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvConnectionStatus">
+            app:layout_constraintEnd_toEndOf="parent">
 
             <TextView
                 android:id="@+id/tv_test_state"
