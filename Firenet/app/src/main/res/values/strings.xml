@@ -17,7 +17,10 @@
 
     <string name="login">ورود</string>
     <string name="support_telegram">پشتیبانی تلگرام</string>
-    <!-- Notifications -->
+    
+    <string name="menu">منو</string>
+    <string name="title_service_start_config">اتصال</string>
+
     <string name="notification_action_stop_v2ray">Stop</string>
     <string name="toast_permission_denied">Unable to obtain the permission</string>
     <string name="toast_permission_denied_notification">Unable to obtain the notification permission</string>
