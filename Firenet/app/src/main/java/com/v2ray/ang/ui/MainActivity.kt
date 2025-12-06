@@ -10,6 +10,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.net.Uri
 import android.net.VpnService
 import android.os.Build
@@ -576,11 +578,20 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                     maybeShowUpdateDialog(token, s)
                 } else {
                     val errMsg = r.exceptionOrNull()?.message ?: ""
-                    if (errMsg.contains("HTTP_401", true) || errMsg.contains("invalid or expired", true)) {
+                    
+                    // --- تغییر مهم برای هندل کردن ساسپند شدن ---
+                    // اگر خطا شامل 403 بود (معمولا برای ساسپند)، دسترسی قطع می‌شود
+                    if (errMsg.contains("HTTP_403", true) || errMsg.contains("suspended", true)) {
+                        handleSuspendedUser()
+                    } 
+                    // اگر توکن منقضی بود
+                    else if (errMsg.contains("HTTP_401", true) || errMsg.contains("invalid or expired", true)) {
                         Toast.makeText(this, "نشست منقضی شده؛ دوباره وارد شوید", Toast.LENGTH_SHORT).show()
                         TokenStore.clear(this)
                         goLoginClearTask()
-                    } else {
+                    } 
+                    // بقیه موارد: لود از کش
+                    else {
                         val cached = MmkvManager.loadLastStatus()
                         if (cached != null) {
                             Toast.makeText(this, "خطا در اتصال به سرور. استفاده از آخرین بروزرسانی اطلاعات", Toast.LENGTH_LONG).show()
@@ -596,6 +607,39 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 }
             }
         }
+    }
+
+    /**
+     * مدیریت کاربر ساسپند شده:
+     * 1. پاک کردن کش اطلاعات و کانفیگ‌ها
+     * 2. نمایش دیالوگ غیر قابل بستن
+     * 3. نگه داشتن توکن برای تلاش‌های بعدی
+     */
+    private fun handleSuspendedUser() {
+        // پاک کردن کانفیگ‌ها و اطلاعات کش شده
+        delAllConfig()
+        MmkvManager.removeSettings(AppConfig.CACHE_LAST_STATUS) // فرض بر این است که این متد وجود دارد یا باید اضافه شود
+        // اگر متد removeSettings ندارید، میتوانید مقداری خالی ذخیره کنید یا نادیده بگیرید
+        
+        // نمایش دیالوگ
+        AlertDialog.Builder(this)
+            .setTitle("حساب مسدود شد")
+            .setMessage("از اتصال جلوگیری شد. وضعیت حساب شما غیرفعال است. لطفا با ادمین تماس بگیرید.")
+            .setCancelable(false) // غیر قابل بستن
+            .setPositiveButton("تلاش مجدد") { _, _ ->
+                // تلاش مجدد برای دریافت وضعیت
+                val token = TokenStore.token(this)
+                if (token != null) {
+                    binding.pbWaiting.show()
+                    loadStatus(token)
+                } else {
+                    goLoginClearTask()
+                }
+            }
+            .setNegativeButton("خروج از حساب") { _, _ ->
+                goLoginClearTask()
+            }
+            .show()
     }
 
     private fun delAllConfig() {
