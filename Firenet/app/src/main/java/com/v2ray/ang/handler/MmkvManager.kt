@@ -605,4 +605,11 @@ object MmkvManager {
             null
         }
     }
+
+    /**
+     * تابع جدید برای پاک کردن کش وضعیت (رفع ارور بیلد)
+     */
+    fun removeLastStatus() {
+        MMKV.defaultMMKV().remove(KEY_LAST_STATUS)
+    }
 }

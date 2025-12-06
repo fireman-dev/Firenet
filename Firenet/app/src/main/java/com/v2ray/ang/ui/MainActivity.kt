@@ -11,7 +11,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.net.Uri
 import android.net.VpnService
 import android.os.Build
@@ -85,6 +84,9 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     private var ring2Animator: ObjectAnimator? = null
     private var ring3Animator: ObjectAnimator? = null
     private var isConnectingAnimationRunning = false
+    
+    // وضعیت آپدیت اجباری
+    private var isForcedUpdateRequired = false
 
     private val tabGroupListener = object : TabLayout.OnTabSelectedListener {
         override fun onTabSelected(tab: TabLayout.Tab?) {
@@ -172,6 +174,12 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         isForceLogoutReceiverRegistered = true
 
         binding.fab.setOnClickListener {
+            // لاجیک آپدیت اجباری: اگر آپدیت لازم باشد، دکمه کار نمی‌کند و دیالوگ باز می‌شود
+            if (isForcedUpdateRequired) {
+                showForcedUpdateDialog()
+                return@setOnClickListener
+            }
+
             if (mainViewModel.isRunning.value == true) {
                 // Disconnect
                 V2RayServiceManager.stopVService(this)
@@ -579,18 +587,14 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 } else {
                     val errMsg = r.exceptionOrNull()?.message ?: ""
                     
-                    // --- تغییر مهم برای هندل کردن ساسپند شدن ---
-                    // اگر خطا شامل 403 بود (معمولا برای ساسپند)، دسترسی قطع می‌شود
                     if (errMsg.contains("HTTP_403", true) || errMsg.contains("suspended", true)) {
                         handleSuspendedUser()
                     } 
-                    // اگر توکن منقضی بود
                     else if (errMsg.contains("HTTP_401", true) || errMsg.contains("invalid or expired", true)) {
                         Toast.makeText(this, "نشست منقضی شده؛ دوباره وارد شوید", Toast.LENGTH_SHORT).show()
                         TokenStore.clear(this)
                         goLoginClearTask()
                     } 
-                    // بقیه موارد: لود از کش
                     else {
                         val cached = MmkvManager.loadLastStatus()
                         if (cached != null) {
@@ -609,25 +613,16 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
     }
 
-    /**
-     * مدیریت کاربر ساسپند شده:
-     * 1. پاک کردن کش اطلاعات و کانفیگ‌ها
-     * 2. نمایش دیالوگ غیر قابل بستن
-     * 3. نگه داشتن توکن برای تلاش‌های بعدی
-     */
     private fun handleSuspendedUser() {
-        // پاک کردن کانفیگ‌ها و اطلاعات کش شده
         delAllConfig()
-        MmkvManager.removeSettings(AppConfig.CACHE_LAST_STATUS) // فرض بر این است که این متد وجود دارد یا باید اضافه شود
-        // اگر متد removeSettings ندارید، میتوانید مقداری خالی ذخیره کنید یا نادیده بگیرید
+        // اصلاح شده: استفاده از تابع جدید برای حذف کش
+        MmkvManager.removeLastStatus()
         
-        // نمایش دیالوگ
         AlertDialog.Builder(this)
             .setTitle("حساب مسدود شد")
             .setMessage("از اتصال جلوگیری شد. وضعیت حساب شما غیرفعال است. لطفا با ادمین تماس بگیرید.")
-            .setCancelable(false) // غیر قابل بستن
+            .setCancelable(false)
             .setPositiveButton("تلاش مجدد") { _, _ ->
-                // تلاش مجدد برای دریافت وضعیت
                 val token = TokenStore.token(this)
                 if (token != null) {
                     binding.pbWaiting.show()
@@ -681,7 +676,17 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     private fun maybeShowUpdateDialog(token: String, s: StatusResponse) {
         if (s.need_to_update == true) {
             repo.updatePromptSeen(token) { }
-            if (s.is_ignoreable == true) showOptionalUpdateDialog() else showForcedUpdateDialog()
+            
+            // اگر آپدیت اجباری است (is_ignoreable == false)
+            if (s.is_ignoreable == true) {
+                showOptionalUpdateDialog()
+                isForcedUpdateRequired = false
+            } else {
+                showForcedUpdateDialog()
+                isForcedUpdateRequired = true // بلاک کردن دکمه اتصال
+            }
+        } else {
+            isForcedUpdateRequired = false
         }
     }
 
@@ -701,7 +706,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             .setTitle(getString(R.string.update_title))
             .setMessage(getString(R.string.update_message))
             .setPositiveButton(getString(R.string.update_now)) { _, _ -> openUpdateLink() }
-            .setCancelable(false)
+            .setCancelable(false) // غیر قابل بستن
             .create()
         dlg.setCanceledOnTouchOutside(false)
         dlg.show()
