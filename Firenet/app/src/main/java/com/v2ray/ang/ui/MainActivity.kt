@@ -293,7 +293,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         binding.bgActive.post {
             if (!binding.bgActive.isAttachedToWindow) return@post
             val cx = (binding.fab.left + binding.fab.right) / 2
-            val cy = (binding.fab.top + binding.fab.bottom) / 2 + binding.layoutConnect.top
+            val cy = (binding.fab.top + binding.fab.bottom) / 2
             val finalRadius = hypot(binding.root.width.toDouble(), binding.root.height.toDouble()).toFloat()
 
             val anim = ViewAnimationUtils.createCircularReveal(binding.bgActive, cx, cy, 0f, finalRadius)
@@ -310,7 +310,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
         // Reverse Circular Reveal
         val cx = (binding.fab.left + binding.fab.right) / 2
-        val cy = (binding.fab.top + binding.fab.bottom) / 2 + binding.layoutConnect.top
+        val cy = (binding.fab.top + binding.fab.bottom) / 2
         val initialRadius = hypot(binding.root.width.toDouble(), binding.root.height.toDouble()).toFloat()
 
         if (binding.bgActive.isVisible) {
