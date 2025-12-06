@@ -6,7 +6,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:gravity="center"
-    android:padding="8dp">
+    android:padding="4dp">
 
     <FrameLayout
         android:id="@+id/layout_indicator"
@@ -27,14 +27,14 @@
 
     <TextView
         android:id="@+id/tv_name"
-        android:layout_width="80dp"
+        android:layout_width="110dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:gravity="center"
         android:ellipsize="end"
-        android:maxLines="1"
+        android:maxLines="2"
         android:textColor="@android:color/white"
         android:textSize="12sp"
-        tools:text="Server 1" />
+        tools:text="Server Name" />
 
 </LinearLayout>
