@@ -1,6 +1,9 @@
 package com.v2ray.ang.ui
 
 import android.Manifest
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -14,11 +17,14 @@ import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.view.Gravity
 import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.ViewAnimationUtils
+import android.view.animation.AccelerateDecelerateInterpolator
+import android.view.animation.LinearInterpolator
+import android.view.animation.OvershootInterpolator
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
@@ -58,6 +64,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.abs
+import kotlin.math.hypot
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener {
     private val binding by lazy {
@@ -73,6 +80,12 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             startV2Ray()
         }
     }
+
+    // Animators for Rings
+    private var ring1Animator: ObjectAnimator? = null
+    private var ring2Animator: ObjectAnimator? = null
+    private var ring3Animator: ObjectAnimator? = null
+    private var isConnectingAnimationRunning = false
 
     private val tabGroupListener = object : TabLayout.OnTabSelectedListener {
         override fun onTabSelected(tab: TabLayout.Tab?) {
@@ -126,11 +139,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         setContentView(binding.root)
         title = getString(R.string.title_server)
 
-        val testState = findViewById<TextView>(R.id.tv_test_state)
-        testState.bringToFront()
-        testState.elevation = 100f
-        testState.translationZ = 100f
-
         binding.btnMenu.setOnClickListener {
             if (!binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
                 binding.drawerLayout.openDrawer(GravityCompat.START)
@@ -151,12 +159,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             }
         }
 
-        findViewById<View>(R.id.layout_test).apply {
-            elevation = 100f
-            translationZ = 100f
-            bringToFront()
-        }
-
         val filter = IntentFilter(AppConfig.ACTION_FORCE_LOGOUT)
         if (Build.VERSION.SDK_INT >= 33) {
             registerReceiver(
@@ -172,8 +174,10 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
         binding.fab.setOnClickListener {
             if (mainViewModel.isRunning.value == true) {
+                // Disconnecting
                 V2RayServiceManager.stopVService(this)
             } else if ((MmkvManager.decodeSettingsString(AppConfig.PREF_MODE) ?: VPN) == VPN) {
+                // Connecting logic
                 val intent = VpnService.prepare(this)
                 if (intent == null) {
                     startV2Ray()
@@ -222,23 +226,143 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         })
     }
 
+    // --- Animation Logic Methods ---
+
+    /**
+     * Start the Connecting animation:
+     * 1. Show rings
+     * 2. Start rotating them indefinitely
+     */
+    private fun startConnectingAnimation() {
+        if (isConnectingAnimationRunning) return
+        isConnectingAnimationRunning = true
+
+        // Reset scale and alpha
+        listOf(binding.ring1, binding.ring2, binding.ring3).forEach {
+            it.visibility = View.VISIBLE
+            it.scaleX = 1f
+            it.scaleY = 1f
+            it.alpha = 1f
+        }
+
+        // Ring 1: Clockwise, Slow
+        ring1Animator = ObjectAnimator.ofFloat(binding.ring1, "rotation", 0f, 360f).apply {
+            duration = 2000
+            repeatCount = ObjectAnimator.INFINITE
+            interpolator = LinearInterpolator()
+            start()
+        }
+
+        // Ring 2: Counter-Clockwise, Medium
+        ring2Animator = ObjectAnimator.ofFloat(binding.ring2, "rotation", 0f, -360f).apply {
+            duration = 1500
+            repeatCount = ObjectAnimator.INFINITE
+            interpolator = LinearInterpolator()
+            start()
+        }
+
+        // Ring 3: Clockwise, Fast
+        ring3Animator = ObjectAnimator.ofFloat(binding.ring3, "rotation", 0f, 360f).apply {
+            duration = 1000
+            repeatCount = ObjectAnimator.INFINITE
+            interpolator = LinearInterpolator()
+            start()
+        }
+    }
+
+    /**
+     * Start the Connected (Success) animation:
+     * 1. Stop rotation
+     * 2. Shrink rings under FAB
+     * 3. Enlarge FAB slightly
+     * 4. Circular Reveal Background
+     */
+    private fun startConnectedAnimation() {
+        isConnectingAnimationRunning = false
+        ring1Animator?.cancel()
+        ring2Animator?.cancel()
+        ring3Animator?.cancel()
+
+        // Shrink rings
+        listOf(binding.ring1, binding.ring2, binding.ring3).forEach { view ->
+            view.animate()
+                .scaleX(0f)
+                .scaleY(0f)
+                .alpha(0f)
+                .setDuration(500)
+                .setInterpolator(AccelerateDecelerateInterpolator())
+                .start()
+        }
+
+        // Enlarge FAB
+        binding.fab.animate()
+            .scaleX(1.1f)
+            .scaleY(1.1f)
+            .setDuration(300)
+            .setInterpolator(OvershootInterpolator())
+            .start()
+
+        // Circular Reveal Background
+        binding.bgActive.post {
+            if (!binding.bgActive.isAttachedToWindow) return@post
+            
+            val cx = (binding.fab.left + binding.fab.right) / 2
+            val cy = (binding.fab.top + binding.fab.bottom) / 2
+            val finalRadius = hypot(binding.root.width.toDouble(), binding.root.height.toDouble()).toFloat()
+
+            val anim = ViewAnimationUtils.createCircularReveal(binding.bgActive, cx, cy, 0f, finalRadius)
+            binding.bgActive.visibility = View.VISIBLE
+            anim.duration = 800
+            anim.interpolator = AccelerateDecelerateInterpolator()
+            anim.start()
+        }
+    }
+
+    /**
+     * Start Disconnect animation:
+     * 1. Reverse Circular Reveal
+     * 2. Reset FAB size
+     */
+    private fun startDisconnectAnimation() {
+        // Reset FAB
+        binding.fab.animate()
+            .scaleX(1f)
+            .scaleY(1f)
+            .setDuration(300)
+            .start()
+
+        // Reverse Circular Reveal
+        val cx = (binding.fab.left + binding.fab.right) / 2
+        val cy = (binding.fab.top + binding.fab.bottom) / 2
+        val initialRadius = hypot(binding.root.width.toDouble(), binding.root.height.toDouble()).toFloat()
+
+        if (binding.bgActive.isVisible) {
+            val anim = ViewAnimationUtils.createCircularReveal(binding.bgActive, cx, cy, initialRadius, 0f)
+            anim.duration = 600
+            anim.interpolator = AccelerateDecelerateInterpolator()
+            anim.addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator) {
+                    super.onAnimationEnd(animation)
+                    binding.bgActive.visibility = View.INVISIBLE
+                }
+            })
+            anim.start()
+        }
+    }
+    
+    // --- End Animation Logic ---
+
     private fun setupHorizontalRecyclerView() {
         binding.recyclerView.setHasFixedSize(true)
         val layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         binding.recyclerView.layoutManager = layoutManager
         binding.recyclerView.adapter = adapter
 
-        // تنظیم SnapHelper برای متوقف شدن روی آیتم‌ها (وسط چین)
         val snapHelper = LinearSnapHelper()
         snapHelper.attachToRecyclerView(binding.recyclerView)
 
-        // اضافه کردن پدینگ برای اینکه اولین و آخرین آیتم هم بتوانند وسط بیایند
         binding.recyclerView.post {
             val width = binding.recyclerView.width
-            // فرض بر این است که ۵ آیتم داریم، پس عرض هر آیتم حدود ۱/۵ عرض صفحه است
-            // اما برای محاسبه دقیق پدینگ: (عرض ریسایکلر - عرض آیتم) / ۲
-            // اینجا تقریبی در نظر میگیریم یا باید داینامیک محاسبه شود
-            // فعلا پدینگ پیش‌فرض در XML کافی است اگر `clipToPadding=false` باشد
             binding.recyclerView.setPadding(width / 2 - 100, 0, width / 2 - 100, 0)
         }
 
@@ -256,7 +380,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                         val position = layoutManager.getPosition(centerView)
                         if (position != RecyclerView.NO_POSITION && position < mainViewModel.serversCache.size) {
                             val guid = mainViewModel.serversCache[position].guid
-                            // انتخاب سرور اگر قبلاً انتخاب نشده باشد
                             if (guid != MmkvManager.getSelectServer()) {
                                 adapter.setSelectServer(guid)
                             }
@@ -269,29 +392,18 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
     private fun scaleItems(recyclerView: RecyclerView) {
         val centerX = recyclerView.width / 2
-        val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-
         for (i in 0 until recyclerView.childCount) {
             val child = recyclerView.getChildAt(i)
             val childCenterX = (child.left + child.right) / 2
             val distanceFromCenter = abs(centerX - childCenterX)
-            val scale = 1f - (distanceFromCenter.toFloat() / recyclerView.width) // هر چه دورتر، کوچکتر
-
-            // محدود کردن اسکیل تا خیلی کوچک نشود (مثلاً حداقل ۰.۷)
+            val scale = 1f - (distanceFromCenter.toFloat() / recyclerView.width)
             val finalScale = Math.max(0.7f, scale)
-            
             child.scaleX = finalScale
             child.scaleY = finalScale
-            
-            // تغییر آلفا برای آیتم‌های دورتر
             child.alpha = Math.max(0.5f, scale)
         }
     }
 
-    /**
-     * Public helper to scroll RecyclerView to a position with center offset.
-     * Used by Adapter to avoid accessing private binding.
-     */
     fun scrollToPositionCentered(position: Int) {
         if (position >= 0 && position < adapter.itemCount) {
              binding.recyclerView.post {
@@ -306,6 +418,9 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             try { unregisterReceiver(forceLogoutReceiver) } catch (_: IllegalArgumentException) {}
             isForceLogoutReceiverRegistered = false
         }
+        ring1Animator?.cancel()
+        ring2Animator?.cancel()
+        ring3Animator?.cancel()
         super.onDestroy()
     }
 
@@ -313,7 +428,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     private fun setupViewModel() {
         mainViewModel.updateListAction.observe(this) { index ->
             if (index >= 0) adapter.notifyItemChanged(index) else adapter.notifyDataSetChanged()
-            // اسکرول به سرور انتخاب شده بعد از آپدیت لیست
             scrollToSelected()
         }
         mainViewModel.updateTestResultAction.observe(this) { setTestState(it) }
@@ -322,18 +436,21 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             adapter.isRunning = isRunning
 
             if (isRunning) {
+                // Connected State
+                startConnectedAnimation()
+                
                 binding.fab.setImageResource(R.drawable.disconnect_button)
-                binding.fab.backgroundTintList = ColorStateList.valueOf(Color.TRANSPARENT)
                 setTestState(getString(R.string.connection_connected))
                 binding.layoutTest.isFocusable = true
-                binding.drawerLayout.setBackgroundResource(R.drawable.bg_main_active)
                 binding.tvConnectionStatus.setText(R.string.connected)
             } else {
+                // Disconnected State
+                startDisconnectAnimation()
+                isConnectingAnimationRunning = false
+                
                 binding.fab.setImageResource(R.drawable.connect_button)
-                binding.fab.backgroundTintList = ColorStateList.valueOf(Color.TRANSPARENT)
                 setTestState(getString(R.string.connection_not_connected))
                 binding.layoutTest.isFocusable = false
-                binding.drawerLayout.setBackgroundResource(R.drawable.bg_main)
                 binding.tvConnectionStatus.setText(R.string.not_connected)
             }
         }
@@ -349,7 +466,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             if (pos >= 0) {
                  binding.recyclerView.post {
                     (binding.recyclerView.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(pos, binding.recyclerView.width / 2 - 100)
-                     // یک تاخیر کوچک برای اعمال اسکیل پس از اسکرول
                      binding.recyclerView.postDelayed({
                          scaleItems(binding.recyclerView)
                      }, 100)
@@ -397,6 +513,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             toast(R.string.title_file_chooser)
             return
         }
+        // Start Connecting Animation BEFORE service starts
+        startConnectingAnimation()
         V2RayServiceManager.startVService(this)
     }
 
@@ -507,13 +625,10 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     }
 
     private fun loadStatus(token: String) {
-
         repo.reportAppUpdateIfNeeded(token) { /* silent */ }
-
         repo.status(token) { r ->
             runOnUiThread {
                 if (isFinishing || isDestroyed) return@runOnUiThread
-
                 if (r.isSuccess) {
                     val s: StatusResponse = r.getOrNull()!!
                     fillUiWithStatus(s)
@@ -579,7 +694,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     
     private fun goLoginClearTask() {
         val jwt = TokenStore.token(applicationContext)
-
         if (!jwt.isNullOrBlank()) {
             Log.d("AUTH", "Logout → POST /api/logout")
             ApiClient.postLogout(jwt) { res ->
@@ -589,9 +703,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         } else {
             Log.w("AUTH", "Logout skipped: token is null/blank")
         }
-
         TokenStore.clear(applicationContext)
-
         val i = Intent(this, LoginActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
@@ -603,9 +715,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         val need = s.need_to_update == true
         val ignorable = s.is_ignoreable == true
         if (!need) return
-
         repo.updatePromptSeen(token) { /* silent */ }
-
         if (ignorable) {
             showOptionalUpdateDialog()
         } else {
