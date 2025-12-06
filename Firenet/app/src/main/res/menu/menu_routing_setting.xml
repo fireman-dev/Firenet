@@ -15,10 +15,6 @@
         android:title="@string/routing_settings_import_rulesets_from_clipboard"
         app:showAsAction="never" />
     <item
-        android:id="@+id/import_rulesets_from_qrcode"
-        android:title="@string/routing_settings_import_rulesets_from_qrcode"
-        app:showAsAction="never" />
-    <item
         android:id="@+id/export_rulesets_to_clipboard"
         android:title="@string/routing_settings_export_rulesets_to_clipboard"
         app:showAsAction="never" />

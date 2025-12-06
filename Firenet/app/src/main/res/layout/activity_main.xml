@@ -134,7 +134,6 @@
                     android:textSize="16sp" 
                     android:textStyle="bold"/>
             </LinearLayout>
-
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <com.google.android.material.tabs.TabLayout
@@ -236,14 +235,14 @@
             android:id="@+id/tvConnectionStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
+            android:layout_marginStart="16dp"
             android:text="@string/not_connected"
             android:textColor="#FFFFFF"
             android:textSize="20sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="@+id/fab"
             app:layout_constraintTop_toTopOf="@+id/fab"
-            app:layout_constraintEnd_toStartOf="@+id/fab" />
+            app:layout_constraintStart_toEndOf="@+id/fab" />
 
         <LinearLayout
             android:id="@+id/layout_test"
